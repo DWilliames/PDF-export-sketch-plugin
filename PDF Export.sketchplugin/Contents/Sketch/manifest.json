@@ -5,7 +5,7 @@
   "homepage": "https://github.com/DWilliames/PDF-export",
   "version": "1.0",
   "identifier": "com.davidwilliames.sketch.pdf-export",
-  "compatibleVersion": "3",
+  "compatibleVersion": "3.5",
   "bundleVersion": "1.0",
   "commands": [
     {
@@ -13,21 +13,21 @@
       "identifier": "selectedArtboardsToPDF",
       "shortcut": "",
       "script": "main.js",
-      "handler": "selectedArtboardsToPDF"
+      "handler": "exportSelection"
     },
     {
       "name": "Export Current Page...",
       "identifier": "currentPageToPDF",
       "shortcut": "",
       "script": "main.js",
-      "handler": "currentPageToPDF"
+      "handler": "exportCurrentPage"
     },
     {
       "name": "Export All Pages...",
       "identifier": "allPagesToPDF",
       "shortcut": "",
       "script": "main.js",
-      "handler": "test"
+      "handler": "exportAllPages"
     },
     {
       "name": "Test",

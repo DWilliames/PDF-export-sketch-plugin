@@ -6,7 +6,8 @@ var keys = {
   excludeWithPrefix: defaultsKeyPrefix + "excludeWithPrefix",
   exclusionPrefix: defaultsKeyPrefix + "exclusionPrefix",
   imageExportScale: defaultsKeyPrefix + "imageExportScale",
-  includeSymbolArtboards: defaultsKeyPrefix + "includeSymbolArtboards"
+  includeSymbolArtboards: defaultsKeyPrefix + "includeSymbolArtboards",
+  exportOrder: defaultsKeyPrefix + "exportOrder",
 }
 
 var defaults = {
@@ -14,5 +15,6 @@ var defaults = {
   [keys.excludeWithPrefix]: true,
   [keys.exclusionPrefix]: '-',
   [keys.imageExportScale]: 2,
-  [keys.includeSymbolArtboards]: false
+  [keys.includeSymbolArtboards]: false,
+  [keys.exportOrder]: 4,
 }

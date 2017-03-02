@@ -21,12 +21,14 @@ var excludeWithPrefix =  NSUserDefaults.standardUserDefaults().boolForKey(keys.e
 var exclusionPrefix =  NSUserDefaults.standardUserDefaults().stringForKey(keys.exclusionPrefix)
 var imageExportScale =  NSUserDefaults.standardUserDefaults().stringForKey(keys.imageExportScale)
 var includeSymbolArtboards = NSUserDefaults.standardUserDefaults().boolForKey(keys.includeSymbolArtboards)
+var exportOrder = NSUserDefaults.standardUserDefaults().integerForKey(keys.exportOrder)
 
 if (exportToImages == null) exportToImages = defaults[keys.exportToImages]
 if (excludeWithPrefix == null) excludeWithPrefix = defaults[keys.excludeWithPrefix]
 if (exclusionPrefix == null) exclusionPrefix = defaults[keys.exclusionPrefix]
 if (imageExportScale == null) imageExportScale = defaults[keys.imageExportScale]
 if (includeSymbolArtboards == null) includeSymbolArtboards = defaults[keys.includeSymbolArtboards]
+if (exportOrder == 0) exportOrder = defaults[keys.exportOrder]
 
 function showOptionsWindow(exportOption, callback) {
 
@@ -67,7 +69,7 @@ function showOptionsWindow(exportOption, callback) {
 	alert.addButtonWithTitle("Export")
 	alert.addButtonWithTitle("Cancel")
 
-  var y = 260
+  var y = 250
   var container = NSView.alloc().initWithFrame(NSMakeRect(0, 0, 300, y))
   alert.setAccessoryView(container)
 
@@ -122,20 +124,20 @@ function showOptionsWindow(exportOption, callback) {
 
   menu.setAutoenablesItems(false)
   order.setMenu(menu)
-  order.selectItemAtIndex(1)
-  container.addSubview(order)
+  order.selectItemAtIndex(exportOrder)
+  // container.addSubview(order)
 
   y -= 23
-  var artboardSubLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
+  var artboardSubLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 300, 46))
   artboardSubLabel.setBezeled(false)
   artboardSubLabel.setDrawsBackground(false)
   artboardSubLabel.setEditable(false)
   artboardSubLabel.setSelectable(false)
-  artboardSubLabel.setStringValue("Select how Artboards will be ordered for the export.")
+  artboardSubLabel.setStringValue("The artboard order is determined by preferences set in \nPreferences > General > Artboard Export") //"Select how Artboards will be ordered for the export."
   artboardSubLabel.setFont(NSFont.systemFontOfSize(10))
   container.addSubview(artboardSubLabel)
 
-  y -= 40
+  y -= 30
   var exportAsImage = NSButton.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
 	exportAsImage.setState(exportToImages)
 	exportAsImage.setButtonType(NSSwitchButton)
@@ -232,11 +234,14 @@ function showOptionsWindow(exportOption, callback) {
     print("excludeWithPrefix: " + excludeWithPrefixButton.state())
     print("exclusionPrefix: " + prefixTextField.stringValue())
 
+    // TODO: Handle empty text state
+
     NSUserDefaults.standardUserDefaults().setBool_forKey(exportAsImage.state(), keys.exportToImages)
     NSUserDefaults.standardUserDefaults().setObject_forKey(pngSizeTextField.stringValue(), keys.imageExportScale)
     NSUserDefaults.standardUserDefaults().setBool_forKey(excludeWithPrefixButton.state(), keys.excludeWithPrefix)
     NSUserDefaults.standardUserDefaults().setObject_forKey(prefixTextField.stringValue(), keys.exclusionPrefix)
     NSUserDefaults.standardUserDefaults().setBool_forKey(includeSymbols.state(), keys.includeSymbolArtboards)
+    NSUserDefaults.standardUserDefaults().setInteger_forKey(order.indexOfSelectedItem(), keys.exportOrder)
     NSUserDefaults.standardUserDefaults().synchronize()
 
     // Save states for next time

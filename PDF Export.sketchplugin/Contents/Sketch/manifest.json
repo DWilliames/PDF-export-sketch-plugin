@@ -18,7 +18,7 @@
     {
       "name": "Export Current Page",
       "identifier": "currentPageToPDF",
-      "shortcut": "",
+      "shortcut": "control e",
       "script": "main.js",
       "handler": "exportCurrentPage"
     },

@@ -1,11 +1,8 @@
 @import 'ui.js'
 
-// https://developer.apple.com/reference/quartz/pdfdocument
-// https://developer.apple.com/reference/quartz/pdfpage
 
 // TODO: Nested symbols
 // TODO: Sorting
-// TODO: Image export @2x
 // TODO: GUI - settings/preferences
 
 /*
@@ -25,15 +22,6 @@ var doc
 var selection
 var iconImage
 
-// preferences
-var exportToImages = false
-var excludeWithPrefix = true
-var exclusionPrefix = '-'
-var imageExportScale = 3
-// 'left-right-top-bottom', 'top-bottom-left-right', 'layer-list', 'layer-list-reversed', 'selection'
-var order = 'left-right-top-bottom'
-
-
 function initialise(context) {
   doc = context.document
   selection = context.selection
@@ -46,35 +34,35 @@ function initialise(context) {
 
 function exportCurrentPage(context) {
   initialise(context)
-  showOptionsWindow()
-
-  return
-  exportArtboards(doc.currentPage().artboards(), doc.currentPage().name())
+  showOptionsWindow("current-page", () => {
+    print("will export")
+    exportArtboards(doc.currentPage().artboards(), doc.currentPage().name())
+  })
 }
 
 function exportAllPages(context) {
   initialise(context)
 
-  var artboards = []
-  doc.pages().forEach(page => {
-    // Ignore pages with the prefix
-    if (excludeWithPrefix && page.name().startsWith(exclusionPrefix))
-      return
+  showOptionsWindow("all-pages", () => {
+    var artboards = []
+    doc.pages().forEach(page => {
+      // Ignore pages with the prefix
+      if (excludeWithPrefix && page.name().startsWith(exclusionPrefix))
+        return
 
-    page.artboards().forEach(artboard => {
-      print(artboard.name())
-      artboards.push(artboard)
+      page.artboards().forEach(artboard => {
+        print(artboard.name())
+        artboards.push(artboard)
+      })
     })
-  })
 
-  exportArtboards(artboards, doc.publisherFileName())
+    exportArtboards(artboards, doc.publisherFileName())
+  })
 }
 
 
 function exportSelection(context) {
   initialise(context)
-
-  order = 'selection'
 
   // If any of the selection is not an artboard — then return
   // Filter out the bad layers — only allow MSArtboardGroup or MSSymbolMaster
@@ -87,11 +75,18 @@ function exportSelection(context) {
   })
 
   if (validLayers && selection.count() > 0) {
-    exportArtboards(selection, selection.firstObject().name())
+    showOptionsWindow("selection", () => {
+      exportArtboards(selection, selection.firstObject().name())
+    })
   } else {
-    // TODO: Make an actual dialog
-    doc.showMessage("Only artboards allowed to proceed PDF export")
+    var alert = NSAlert.alloc().init()
+    alert.setIcon(iconImage)
+    alert.setMessageText("PDF Export Artboards")
+    alert.setInformativeText("Only artboards are allowed to be selected in order to proceed")
+    alert.addButtonWithTitle("Got it")
+    alert.runModal()
   }
+
 }
 
 
@@ -116,7 +111,7 @@ function exportArtboards(artboards, outputName) {
 // The artboards will be sorted according to the specified settings
 // 'callback' will return the page, containing a collation of the artboards
 function collateArtboardsIntoPage(artboards, outputName, callback) {
-
+  print("collate")
   // Let's create a new page
   var temporaryPage = MSPage.new()
   // TODO: Add some more smarts around what the name is
@@ -127,9 +122,13 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   // Add the page to our document, temporarily (we'll remove it later)
   doc.documentData().addPage(temporaryPage)
 
+  print("will exclude")
   // Filter artboards if necessary
   if (excludeWithPrefix) {
+    print("should exclude")
     artboards = filter(artboards, artboard => {
+      print("exlusion: " + exclusionPrefix)
+      print(exclusionPrefix.class())
       return !artboard.name().startsWith(exclusionPrefix)
     })
   }
@@ -218,6 +217,7 @@ function sortTopBottomLeftRight(a, b){
 // Export page by the built-in exporter
 // This also automatically asks the user where they want to save it
 function exportPageToPDF(page) {
+  print("export page to PDF")
   // Export the temporary page to the PDF
   // var artboard = page.artboards().firstObject()
   // MSPDFBookExporter.pdfFromArtboard(artboard)
@@ -258,7 +258,7 @@ function exportPageToImagesToPDF(page) {
     // [[layer exportOptions] addExportFormat]
     artboard.exportOptions().addExportFormat()
     var exportSize = artboard.exportOptions().exportFormats().lastObject() //[[[layer exportOptions] exportFormats] lastObject]
-    exportSize.scale = imageExportScale
+    exportSize.scale = 2//imageExportScale
     exportSize.name = ''
     exportSize.format = 'png'
 
@@ -314,6 +314,8 @@ function filter(array, condition) {
 }
 
 function cleanString(string){
+  return string
+  // TODO: Figure out if this is necessary
   var notAllowedChars = NSCharacterSet.characterSetWithCharactersInString("\\<>=,!#$&'()*+/:;=?@[]%")
   return string.componentsSeparatedByCharactersInSet(notAllowedChars).componentsJoinedByString('')
 }

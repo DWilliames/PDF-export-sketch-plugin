@@ -1,5 +1,5 @@
 {
-  "name": "📕 PDF export",
+  "name": "PDF export",
   "description": "Export artboards to PDF — from the current page, all pages or current selection",
   "author": "David Williames",
   "homepage": "https://github.com/DWilliames/PDF-export",
@@ -9,39 +9,42 @@
   "bundleVersion": "1.0",
   "commands": [
     {
-      "name": "Export Selected Artboards...",
+      "name": "Export Selected Artboards",
       "identifier": "selectedArtboardsToPDF",
       "shortcut": "",
       "script": "main.js",
       "handler": "exportSelection"
     },
     {
-      "name": "Export Current Page...",
+      "name": "Export Current Page",
       "identifier": "currentPageToPDF",
       "shortcut": "",
       "script": "main.js",
       "handler": "exportCurrentPage"
     },
     {
-      "name": "Export All Pages...",
+      "name": "Export All Pages",
       "identifier": "allPagesToPDF",
       "shortcut": "",
       "script": "main.js",
       "handler": "exportAllPages"
     },
     {
-      "name": "Test",
+      "name": "About",
       "identifier": "new",
       "shortcut": "",
       "script": "main.js",
       "handler": "test"
     }
   ],
-    "menu": {
+  "menu": {
+    "isRoot" : false,
+    "title" : "📕 PDF export",
     "items": [
       "selectedArtboardsToPDF",
       "currentPageToPDF",
       "allPagesToPDF",
+      "-",
       "new"
     ]
   }

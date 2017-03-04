@@ -1,6 +1,6 @@
 @import 'ui.js'
 
-
+// TODO: Figure out how to do custom sorting
 // TODO: Nested symbols
 // TODO: Sorting
 // TODO: GUI - settings/preferences
@@ -127,6 +127,7 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   if (excludeWithPrefix) {
     print("should exclude")
     artboards = filter(artboards, artboard => {
+
       print("exlusion: " + exclusionPrefix)
       print(exclusionPrefix.class())
       return !artboard.name().startsWith(exclusionPrefix)
@@ -134,64 +135,151 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   }
 
   // Sort the artboards — either by visual location, layer list order, or selection order
-  print(order)
-  switch (order) {
-    case 'left-right-top-bottom':
-      print('sort: lrtb')
-      artboards = artboards.sort((a, b) => {
-        return a.frame().top() < b.frame().top()
-      }).sort((a, b) => {
-        return a.frame().left() < b.frame().left()
-      })
-      // artboards = artboards.sort(sortLeftRightTopBottom)
-      break
-    case 'top-bottom-left-right':
-      print('sort: tblr')
-      artboards = artboards.sort(sortTopBottomLeftRight)
-      break
-    default: break
-  }
+  // print(order)
+  // switch (order) {
+  //   case 'left-right-top-bottom':
+  //     print('sort: lrtb')
+  //     artboards = artboards.sort((a, b) => {
+  //       return a.frame().top() < b.frame().top()
+  //     }).sort((a, b) => {
+  //       return a.frame().left() < b.frame().left()
+  //     })
+  //     // artboards = artboards.sort(sortLeftRightTopBottom)
+  //     break
+  //   case 'top-bottom-left-right':
+  //     print('sort: tblr')
+  //     artboards = artboards.sort(sortTopBottomLeftRight)
+  //     break
+  //   default: break
+  // }
 
+  var pageLayoutData = {}
+  /* format
+  {
+    [pageId]: { maxX: 0, minX: 0, maxY: 0, minY: 0 }
+  }
+  */
+
+  // Let's ge the maximum and minimum x and y values for all the artboards in each page
+  artboards.forEach(artboard => {
+    var pageID = artboard.parentPage().objectID()
+    print(artboard.name())
+    print("x: " + artboard.frame().left() + ", y: " + artboard.frame().top())
+    print(artboard.absoluteRect())
+    // If the key doesn't exist
+    if (!(pageID in pageLayoutData)) {
+      pageLayoutData[pageID] = { maxX: null, maxY: null, minX: null, minY: null }
+    }
+    // Set the max and min values
+    var maxX = artboard.frame().left() + artboard.frame().width()
+    if (maxX > pageLayoutData[pageID].maxX || pageLayoutData[pageID].maxX == null) {
+      pageLayoutData[pageID].maxX = maxX
+    }
+    var minX = artboard.frame().left()
+    if (minX < pageLayoutData[pageID].minX || pageLayoutData[pageID].minX == null) {
+      pageLayoutData[pageID].minX = minX
+    }
+
+    var maxY = artboard.frame().top() + artboard.frame().height()
+    if (maxY > pageLayoutData[pageID].maxY || pageLayoutData[pageID].maxY == null) {
+      pageLayoutData[pageID].maxY = maxY
+    }
+    var minY = artboard.frame().top()
+    if (minY < pageLayoutData[pageID].minY || pageLayoutData[pageID].minY == null) {
+      pageLayoutData[pageID].minY = minY
+    }
+  })
+
+  print(pageLayoutData)
 
   // Add all the artboards to the page
+
+  var previousPage = ''
+  var currentPage = ''
+  var xOffset = 0
+  var yOffset = 0
+
   artboards.forEach(artboard => {
     let copy = artboard.copy()
+
+    var pageID = artboard.parentPage().objectID()
+
+    if (currentPage != pageID) {
+      previousPage = currentPage
+      currentPage = pageID
+
+      if (previousPage != '') {
+        print("previous")
+        var previousPageLayout = pageLayoutData[previousPage]
+        xOffset += (previousPageLayout.maxX + 1)
+        yOffset += (previousPageLayout.maxY + 1)
+
+        print("X: " + xOffset)
+        print("Y: " + xOffset)
+      }
+    }
 
     // If the layer is a MSSymbolMaster — convert it to an artboard
     if (copy.isMemberOfClass(MSSymbolMaster)) {
       copy = MSSymbolMaster.convertSymbolToArtboard(copy)
     }
+
+    if (copy.isMemberOfClass(MSSymbolInstance)) {
+      findAndDetachFromSymbol(copy)
+    }
+
+    function findAndDetachFromSymbol(layer) {
+      if (layer.isMemberOfClass(MSSymbolInstance)) {
+        layer = layer.detachByReplacingWithGroup()
+        layer.children().forEach(innerLayer => {
+          findAndDetachFromSymbol(innerLayer)
+        })
+      }
+    }
+
+    if (copy.isMemberOfClass(MSArtboardGroup)) {
+      var x = copy.frame().left() + xOffset - pageLayoutData[currentPage].minX
+      var y = copy.frame().top() + yOffset - pageLayoutData[currentPage].minY
+      print("Offset — x: " + x + ", y: " + y)
+      copy.frame().setX(x)
+      copy.frame().setY(y)
+    }
+
     temporaryPage.addLayer(copy)
   })
 
-  var x = 0
-  temporaryPage.children().forEach(pageLayer => {
-    // Detatch any instances of symbols (including any sub-symbols)
-    if (pageLayer.isMemberOfClass(MSSymbolInstance)) {
-      findAndDetachFromSymbol(pageLayer)
-    }
-    // Lay them out nicely (without overlap)
-    if (pageLayer.isMemberOfClass(MSArtboardGroup)) {
-      pageLayer.frame().setX(x)
-      pageLayer.frame().setY(0)
-      x += (pageLayer.frame().width() + 1)
-    }
-  })
 
-  function findAndDetachFromSymbol(layer) {
-    if (layer.isMemberOfClass(MSSymbolInstance)) {
-      layer = layer.detachByReplacingWithGroup()
-      layer.children().forEach(innerLayer => {
-        findAndDetachFromSymbol(innerLayer)
-      })
-    }
-  }
+  //
+  // var x = 0
+  // var currentPage = nil
+  //
+  // temporaryPage.children().forEach(pageLayer => {
+  //   // Detatch any instances of symbols (including any sub-symbols)
+  //   if (pageLayer.isMemberOfClass(MSSymbolInstance)) {
+  //     findAndDetachFromSymbol(pageLayer)
+  //   }
+  //   // Lay them out nicely (without overlap)
+  //   if (pageLayer.isMemberOfClass(MSArtboardGroup)) {
+  //     pageLayer.frame().setX(x)
+  //     pageLayer.frame().setY(0)
+  //     x += (pageLayer.frame().width() + 1)
+  //   }
+  // })
+  //
+  // function findAndDetachFromSymbol(layer) {
+  //   if (layer.isMemberOfClass(MSSymbolInstance)) {
+  //     layer = layer.detachByReplacingWithGroup()
+  //     layer.children().forEach(innerLayer => {
+  //       findAndDetachFromSymbol(innerLayer)
+  //     })
+  //   }
+  // }
 
   // Return the page pack to the callback
   callback(temporaryPage)
 
   // Remove the temporary page now that we are done with it
-  doc.documentData().removePage(temporaryPage)
+  // doc.documentData().removePage(temporaryPage)
 }
 
 

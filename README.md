@@ -11,7 +11,5 @@ After changes, copy the plugin into the Sketch plugin directory.
 
 Alternatively, watch the folder for changes, and automatically copy changes across.
 `brew install fswatch`
-`chmod +x run.sh`
-
 Then in the 'PDF-export' directory
-`cfswatch -o . | xargs -n1 ./run.sh`
+`fswatch -o . | xargs -n1 ./run.sh`

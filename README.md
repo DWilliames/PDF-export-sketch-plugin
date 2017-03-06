@@ -13,3 +13,15 @@ Alternatively, watch the folder for changes, and automatically copy changes acro
 `brew install fswatch`
 Then in the 'PDF-export' directory
 `fswatch -o . | xargs -n1 ./run.sh`
+
+
+### Class dumping the headers
+Download [class-dump](http://stevenygard.com/projects/class-dump/)
+Move it to `/usr/local/bin`
+
+Extract the headers using **class-dump**
+`class-dump /Applications/Sketch\ Beta.app/Contents/MacOS/Sketch\ Beta -o ~/Desktop`
+
+Or use the `Makefile`
+`make` > to extract Sketch header files
+`make app='Sketch\ Beta'` ? to extra Sketch Beta header files

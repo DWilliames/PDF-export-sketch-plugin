@@ -30,7 +30,7 @@ if (imageExportScale == null) imageExportScale = defaults[keys.imageExportScale]
 if (includeSymbolArtboards == null) includeSymbolArtboards = defaults[keys.includeSymbolArtboards]
 if (exportOrder == 0) exportOrder = defaults[keys.exportOrder]
 
-function showOptionsWindow(exportOption, callback) {
+function showOptionsWindow(exportOption, name, callback) {
 
   var title = ""
   var message = ""
@@ -38,11 +38,11 @@ function showOptionsWindow(exportOption, callback) {
   switch (exportOption) {
     case "all-pages":
       title = "Export all pages to PDF"
-      message = "Export all " + doc.pages().length + " pages from '" + doc.publisherFileName() + "' into a single PDF document"
+      message = "Export all " + doc.pages().length + " pages from '" + name + "' into a single PDF document"
       break
     case "current-page":
       title = "Export current page to PDF"
-      message = "Export Artboards from '" + doc.currentPage().name() + "' into a single PDF document"
+      message = "Export Artboards from '" + name + "' into a single PDF document"
       break
     case "selection":
       title = "Export selection to PDF"
@@ -182,7 +182,8 @@ function showOptionsWindow(exportOption, callback) {
   excludeWithPrefixButton.setState(excludeWithPrefix)
   excludeWithPrefixButton.setButtonType(NSSwitchButton)
   excludeWithPrefixButton.setBezelStyle(0)
-  excludeWithPrefixButton.setTitle("Ignore Artboards and Pages with prefix")
+  var excludeWithPrefixTitle = (exportOption == 'all-pages') ? "Ignore Artboards and Pages with prefix" : "Ignore Artboards with prefix"
+  excludeWithPrefixButton.setTitle(excludeWithPrefixTitle)
   container.addSubview(excludeWithPrefixButton)
 
   y -= 28

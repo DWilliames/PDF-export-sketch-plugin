@@ -34,16 +34,20 @@ function initialise(context) {
 
 function exportCurrentPage(context) {
   initialise(context)
-  showOptionsWindow("current-page", () => {
+  var name = doc.currentPage().name()
+  showOptionsWindow("current-page", name, () => {
     print("will export")
-    exportArtboards(doc.currentPage().artboards(), doc.currentPage().name())
+    exportArtboards(doc.currentPage().artboards(), name)
   })
 }
 
 function exportAllPages(context) {
   initialise(context)
 
-  showOptionsWindow("all-pages", () => {
+    // TODO: doc.publisherFileName() Version 42
+    // Later = doc.cloudName()
+  var name = doc.publisherFileName()
+  showOptionsWindow("all-pages", name, () => {
     var artboards = []
     doc.pages().forEach(page => {
       // Ignore pages with the prefix
@@ -56,7 +60,9 @@ function exportAllPages(context) {
       })
     })
 
-    exportArtboards(artboards, doc.publisherFileName())
+
+
+    exportArtboards(artboards, name)
   })
 }
 
@@ -75,8 +81,9 @@ function exportSelection(context) {
   })
 
   if (validLayers && selection.count() > 0) {
+    var name = selection.firstObject().name()
     showOptionsWindow("selection", () => {
-      exportArtboards(selection, selection.firstObject().name())
+      exportArtboards(selection, name)
     })
   } else {
     var alert = NSAlert.alloc().init()
@@ -163,9 +170,9 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   // Let's ge the maximum and minimum x and y values for all the artboards in each page
   artboards.forEach(artboard => {
     var pageID = artboard.parentPage().objectID()
-    print(artboard.name())
-    print("x: " + artboard.frame().left() + ", y: " + artboard.frame().top())
-    print(artboard.absoluteRect())
+    // print(artboard.name())
+    // print("x: " + artboard.frame().left() + ", y: " + artboard.frame().top())
+    // print(artboard.absoluteRect())
     // If the key doesn't exist
     if (!(pageID in pageLayoutData)) {
       pageLayoutData[pageID] = { maxX: null, maxY: null, minX: null, minY: null }
@@ -193,11 +200,13 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   print(pageLayoutData)
 
   // Add all the artboards to the page
-
   var previousPage = ''
   var currentPage = ''
   var xOffset = 0
   var yOffset = 0
+
+  var x = 0
+  var y = 0
 
   artboards.forEach(artboard => {
     let copy = artboard.copy()
@@ -209,41 +218,134 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
       currentPage = pageID
 
       if (previousPage != '') {
-        print("previous")
+        // print("previous")
         var previousPageLayout = pageLayoutData[previousPage]
         xOffset += (previousPageLayout.maxX + 1)
         yOffset += (previousPageLayout.maxY + 1)
 
-        print("X: " + xOffset)
-        print("Y: " + xOffset)
+        // print("X: " + xOffset)
+        // print("Y: " + xOffset)
       }
     }
 
     // If the layer is a MSSymbolMaster — convert it to an artboard
-    if (copy.isMemberOfClass(MSSymbolMaster)) {
-      copy = MSSymbolMaster.convertSymbolToArtboard(copy)
-    }
+    // if (copy.isMemberOfClass(MSSymbolMaster)) {
+    //   // print("Found symbol master: " + copy.name())
+    //   if (includeSymbolArtboards) {
+    //     copy = MSSymbolMaster.convertSymbolToArtboard(copy)
+    //   } else {
+    //     return
+    //   }
+    // }
 
-    if (copy.isMemberOfClass(MSSymbolInstance)) {
-      findAndDetachFromSymbol(copy)
-    }
+    // var children = copy.allSymbolInstancesInChildren()
+    // var childrenLoop = children.objectEnumerator()
+    // while (symbolInstance = childrenLoop.nextObject()) {
+    //   print("detatch: " + symbolInstance.name())
+    //   symbolInstance.detachByReplacingWithGroup()
+    //   // print(detachedSymbol.class())x
+    //   // copy.addLayer(detachedSymbol)
+    // }
+    //
+    //
+    // print("Children:")
+    // print(children)
+    // print(children.class())
+    //
+    // var groups = children.objectEnumerator()
+    // print(groups)
+    // print(groups.class())
+    //
+    // var objects = groups.allObjects()
+    // print(objects)
+    // print(objects.class())
+    //
+    // objects.forEach(symbolInstance => {
+    //   print("detatch: " + symbolInstance.name())
+    //   symbolInstance = symbolInstance.detachByReplacingWithGroup()
+    // })
 
-    function findAndDetachFromSymbol(layer) {
+    // allSymbolInstancesInChildren
+
+
+
+
+    copy.children().forEach(layer => {
       if (layer.isMemberOfClass(MSSymbolInstance)) {
-        layer = layer.detachByReplacingWithGroup()
-        layer.children().forEach(innerLayer => {
-          findAndDetachFromSymbol(innerLayer)
+        detatchSymbol(layer)
+      }
+    })
+
+    function detatchSymbol(layer) {
+      if (layer.isMemberOfClass(MSSymbolInstance)) {
+        print("Found instance: " + layer.name())
+        print("Layer artbaord: " + layer.parentArtboard().name())
+        // print("Instance master: " + layer.symbolMaster().name())
+        // layer.symbolMaster().detachAllInstances()
+        var detachedLayer = layer.detachByReplacingWithGroup()
+        print(detachedLayer)
+        if (detachedLayer != nil) {
+        var children = detachedLayer.children()
+        children.forEach(detachedChild => {
+          detatchSymbol(detachedChild)
         })
+        }
       }
     }
 
+
+
+
+    // var pageChildrenLoop = copy.children().objectEnumerator()
+    // while (pageLayer = pageChildrenLoop.nextObject()) {
+    //     if (pageLayer.isMemberOfClass(MSSymbolInstance)) {
+    //       print("Found instance: " + pageLayer.name())
+    //       pageLayer = pageLayer.detachByReplacingWithGroup()
+    //         // findAndDetachFromSymbol(pageLayer)
+    //     }
+    // }
+    // function findAndDetachFromSymbol(layer) {
+    //     if (layer.isMemberOfClass(MSSymbolInstance)) {
+    //         layer = layer.detachByReplacingWithGroup()
+    //         print(layer)
+    //         print(layer.children())
+    //         var layerChildrenLoop = layer.children().objectEnumerator()
+    //         while (innerLayer = layerChildrenLoop.nextObject()) {
+    //             findAndDetachFromSymbol(innerLayer)
+    //         }
+    //     }
+    // }
+
+
+    //
+    // findAndDetachFromSymbol(copy)
+    //
+    // if (copy.isMemberOfClass(MSSymbolInstance)) {
+    //   findAndDetachFromSymbol(copy)
+    // }
+    //
+    // function findAndDetachFromSymbol(layer) {
+    //   print("Detatch: " + layer.name())
+    //   if (layer.isMemberOfClass(MSSymbolInstance)) {
+    //     layer = layer.detachByReplacingWithGroup()
+    //   }
+    //     layer.children().forEach(innerLayer => {
+    //       print(innerLayer.name())
+    //       findAndDetachFromSymbol(innerLayer)
+    //     })
+    //
+    // }
+
     if (copy.isMemberOfClass(MSArtboardGroup)) {
-      var x = copy.frame().left() + xOffset - pageLayoutData[currentPage].minX
-      var y = copy.frame().top() + yOffset - pageLayoutData[currentPage].minY
+      // var x = copy.frame().left() + xOffset - pageLayoutData[currentPage].minX
+      // var y = copy.frame().top() + yOffset - pageLayoutData[currentPage].minY
       print("Offset — x: " + x + ", y: " + y)
       copy.frame().setX(x)
       copy.frame().setY(y)
+
+      x += (copy.frame().width() + 1)
     }
+
 
     temporaryPage.addLayer(copy)
   })
@@ -275,6 +377,8 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   //   }
   // }
 
+
+
   // Return the page pack to the callback
   callback(temporaryPage)
 
@@ -296,6 +400,8 @@ function sortTopBottomLeftRight(a, b){
 	var x = a.frame().top() - b.frame().top()
   return x == 0 ? a.frame().left() - b.frame().left() : x
 }
+
+
 
 
 // ****************************

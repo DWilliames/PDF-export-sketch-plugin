@@ -22,15 +22,18 @@ This will export each artboard first into a PNG, then place those PNGs together 
 This is extremely helpful for things such as 'images with fills', 'gradient fills', 'some shadows' that sometimes don't render well into a PDF.
 > You can also specify the export size for the PNGs — same as the typical Sketch export; '200w' = width of 200px, '100h' = height of 100px, '3x' = 3 times artboard size
 
+---
 
 #### Ignore Artboards with prefix
 Do you sometimes have those few artboards you still want to keep around, but don't necessarily want to export? Then this is perfect for you.
 When checked, you can specify a prefix. Every artboard with that prefix will be excluded when exporting.
 
+---
 
 #### Include 'Symbol Master' Artboards
 Based on your use of Sketch, there may be times you want to include your master symbols in the export, and a lot of the time not. Now you have the easy choice.
 
+---
 
 ## Why make this plugin?
 

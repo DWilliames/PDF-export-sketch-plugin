@@ -2,9 +2,12 @@
 
 // TODO: Figure out how to do custom sorting
 // TODO: Nested symbols
-// TODO: Sorting
-// TODO: GUI - settings/preferences
+// TODO: Sorting for images
+// TODO: turn layer with prefix into images
 
+
+
+// CREATE A NEW PAGE FOR EACH EXISTING PAGE ONE!!!!
 /*
 
 SETTINGS:
@@ -208,6 +211,10 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
   var x = 0
   var y = 0
 
+  var orderedArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(artboards)
+  print(orderedArtboards)
+  // return
+
   artboards.forEach(artboard => {
     let copy = artboard.copy()
 
@@ -229,14 +236,14 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
     }
 
     // If the layer is a MSSymbolMaster — convert it to an artboard
-    // if (copy.isMemberOfClass(MSSymbolMaster)) {
-    //   // print("Found symbol master: " + copy.name())
-    //   if (includeSymbolArtboards) {
-    //     copy = MSSymbolMaster.convertSymbolToArtboard(copy)
-    //   } else {
-    //     return
-    //   }
-    // }
+    if (copy.isMemberOfClass(MSSymbolMaster)) {
+      // print("Found symbol master: " + copy.name())
+      if (includeSymbolArtboards) {
+        copy = MSSymbolMaster.convertSymbolToArtboard(copy)
+      } else {
+        return
+      }
+    }
 
     // var children = copy.allSymbolInstancesInChildren()
     // var childrenLoop = children.objectEnumerator()
@@ -270,28 +277,28 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
 
 
 
-    copy.children().forEach(layer => {
-      if (layer.isMemberOfClass(MSSymbolInstance)) {
-        detatchSymbol(layer)
-      }
-    })
-
-    function detatchSymbol(layer) {
-      if (layer.isMemberOfClass(MSSymbolInstance)) {
-        print("Found instance: " + layer.name())
-        print("Layer artbaord: " + layer.parentArtboard().name())
-        // print("Instance master: " + layer.symbolMaster().name())
-        // layer.symbolMaster().detachAllInstances()
-        var detachedLayer = layer.detachByReplacingWithGroup()
-        print(detachedLayer)
-        if (detachedLayer != nil) {
-        var children = detachedLayer.children()
-        children.forEach(detachedChild => {
-          detatchSymbol(detachedChild)
-        })
-        }
-      }
-    }
+    // copy.children().forEach(layer => {
+    //   if (layer.isMemberOfClass(MSSymbolInstance)) {
+    //     detatchSymbol(layer)
+    //   }
+    // })
+    //
+    // function detatchSymbol(layer) {
+    //   if (layer.isMemberOfClass(MSSymbolInstance)) {
+    //     print("Found instance: " + layer.name())
+    //     print("Layer artbaord: " + layer.parentArtboard().name())
+    //     // print("Instance master: " + layer.symbolMaster().name())
+    //     // layer.symbolMaster().detachAllInstances()
+    //     var detachedLayer = layer.detachByReplacingWithGroup()
+    //     print(detachedLayer)
+    //     if (detachedLayer != nil) {
+    //       var children = detachedLayer.children()
+    //       children.forEach(detachedChild => {
+    //         detatchSymbol(detachedChild)
+    //       })
+    //     }
+    //   }
+    // }
 
 
 
@@ -336,15 +343,15 @@ function collateArtboardsIntoPage(artboards, outputName, callback) {
     //
     // }
 
-    if (copy.isMemberOfClass(MSArtboardGroup)) {
-      // var x = copy.frame().left() + xOffset - pageLayoutData[currentPage].minX
-      // var y = copy.frame().top() + yOffset - pageLayoutData[currentPage].minY
-      print("Offset — x: " + x + ", y: " + y)
+    // if (copy.isMemberOfClass(MSArtboardGroup)) {
+      // var x = copy.frame().x() + xOffset - pageLayoutData[currentPage].minX
+      // var y = copy.frame().y() + yOffset - pageLayoutData[currentPage].minY
+      print("" + copy.name() + " — x: " + x + ", y: " + y)
       copy.frame().setX(x)
       copy.frame().setY(y)
 
       x += (copy.frame().width() + 1)
-    }
+    // }
 
 
     temporaryPage.addLayer(copy)
@@ -450,9 +457,26 @@ function exportPageToImagesToPDF(page) {
     filePaths.push(tempPath)
 
     // [[layer exportOptions] addExportFormat]
+    var exportScale = imageExportScale.replace(/\s/g, '') // remove spaces
+    print('export scale: ' + exportScale)
+
+    var scale = 2
+    if (exportScale.slice(-1) == 'h') {
+      print('detected height')
+      scale = parseInt(exportScale.slice(0, -1)) / artboard.frame().height()
+    } else if (exportScale.slice(-1) == 'w') {
+      print('detected width')
+      scale = parseInt(exportScale.slice(0, -1)) / artboard.frame().width()
+    } else {
+      scale = parseInt(exportScale)
+    }
+
+    print('scale: ' + scale)
+
+
     artboard.exportOptions().addExportFormat()
     var exportSize = artboard.exportOptions().exportFormats().lastObject() //[[[layer exportOptions] exportFormats] lastObject]
-    exportSize.scale = 2//imageExportScale
+    exportSize.scale = scale//imageExportScale
     exportSize.name = ''
     exportSize.format = 'png'
 

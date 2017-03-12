@@ -156,7 +156,7 @@ function showOptionsWindow(exportOption, name, callback) {
   container.addSubview(pngSizeLabel)
 
   y += 6
-  var pngSizeTextField = NSTextField.alloc().initWithFrame(NSMakeRect(105, y, 50, 23))
+  var pngSizeTextField = NSTextField.alloc().initWithFrame(NSMakeRect(105, y, 70, 23))
 	pngSizeTextField.setPlaceholderString("2x")
   pngSizeTextField.setStringValue("" + imageExportScale)
   container.addSubview(pngSizeTextField)
@@ -197,7 +197,7 @@ function showOptionsWindow(exportOption, name, callback) {
   container.addSubview(prefixLabel)
 
   y += 6
-  var prefixTextField = NSTextField.alloc().initWithFrame(NSMakeRect(55, y, 100, 23))
+  var prefixTextField = NSTextField.alloc().initWithFrame(NSMakeRect(55, y, 120, 23))
   prefixTextField.setPlaceholderString("-")
   prefixTextField.setStringValue(exclusionPrefix)
   container.addSubview(prefixTextField)
@@ -237,12 +237,19 @@ function showOptionsWindow(exportOption, name, callback) {
 
     // TODO: Handle empty text state
 
-    NSUserDefaults.standardUserDefaults().setBool_forKey(exportAsImage.state(), keys.exportToImages)
-    NSUserDefaults.standardUserDefaults().setObject_forKey(pngSizeTextField.stringValue(), keys.imageExportScale)
-    NSUserDefaults.standardUserDefaults().setBool_forKey(excludeWithPrefixButton.state(), keys.excludeWithPrefix)
-    NSUserDefaults.standardUserDefaults().setObject_forKey(prefixTextField.stringValue(), keys.exclusionPrefix)
-    NSUserDefaults.standardUserDefaults().setBool_forKey(includeSymbols.state(), keys.includeSymbolArtboards)
-    NSUserDefaults.standardUserDefaults().setInteger_forKey(order.indexOfSelectedItem(), keys.exportOrder)
+    exportToImages = exportAsImage.state()
+    imageExportScale = pngSizeTextField.stringValue()
+    excludeWithPrefix = excludeWithPrefixButton.state()
+    exclusionPrefix = prefixTextField.stringValue()
+    includeSymbolArtboards = includeSymbols.state()
+    exportOrder = order.indexOfSelectedItem()
+
+    NSUserDefaults.standardUserDefaults().setBool_forKey(exportToImages, keys.exportToImages)
+    NSUserDefaults.standardUserDefaults().setObject_forKey(imageExportScale, keys.imageExportScale)
+    NSUserDefaults.standardUserDefaults().setBool_forKey(excludeWithPrefix, keys.excludeWithPrefix)
+    NSUserDefaults.standardUserDefaults().setObject_forKey(exclusionPrefix, keys.exclusionPrefix)
+    NSUserDefaults.standardUserDefaults().setBool_forKey(includeSymbolArtboards, keys.includeSymbolArtboards)
+    NSUserDefaults.standardUserDefaults().setInteger_forKey(exportOrder, keys.exportOrder)
     NSUserDefaults.standardUserDefaults().synchronize()
 
     // Save states for next time

@@ -13,39 +13,36 @@
       "identifier": "selectedArtboardsToPDF",
       "shortcut": "",
       "script": "main.js",
-      "handler": "exportSelection"
+      "handler": "exportSelection",
+      "icon": "icons\/selection.png",
+      "description": "Export all selected Artboards into a PDF document."
     },
     {
       "name": "Export Current Page",
       "identifier": "currentPageToPDF",
       "shortcut": "control e",
       "script": "main.js",
-      "handler": "exportCurrentPage"
+      "handler": "exportCurrentPage",
+      "icon": "icons\/current-page.png",
+      "description": "Export all Artboards in the current page into a PDF document."
     },
     {
       "name": "Export All Pages",
       "identifier": "allPagesToPDF",
       "shortcut": "",
       "script": "main.js",
-      "handler": "exportAllPages"
-    },
-    {
-      "name": "About",
-      "identifier": "new",
-      "shortcut": "",
-      "script": "main.js",
-      "handler": "test"
+      "handler": "exportAllPages",
+      "icon": "icons\/all-pages.png",
+      "description": "Export all Artboards within the document into a PDF document."
     }
   ],
   "menu": {
     "isRoot" : false,
-    "title" : "📕 PDF export",
+    "title" : "📕 PDF export...",
     "items": [
       "selectedArtboardsToPDF",
       "currentPageToPDF",
-      "allPagesToPDF",
-      "-",
-      "new"
+      "allPagesToPDF"
     ]
   }
 }

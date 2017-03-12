@@ -1,34 +1,6 @@
 @import 'MochaJSDelegate.js'
 @import 'defaults.js'
 
-// preferences
-// var exportToImages = valueForKey(keys.exportToImages)
-// var excludeWithPrefix = valueForKey(keys.excludeWithPrefix)
-// var exclusionPrefix = valueForKey(keys.exclusionPrefix)
-// var imageExportScale = valueForKey(keys.imageExportScale)
-var order = 'left-right-top-bottom'
-
-// TODO: Save order
-
-// NSUserDefaults.standardUserDefaults().setBool_forKey(false, keys.exportToImages)
-// NSUserDefaults.standardUserDefaults().setObject_forKey('2x', keys.imageExportScale)
-// NSUserDefaults.standardUserDefaults().setBool_forKey(true, keys.excludeWithPrefix)
-// NSUserDefaults.standardUserDefaults().setObject_forKey('-', keys.exclusionPrefix)
-// NSUserDefaults.standardUserDefaults().synchronize()
-
-var exportToImages =  NSUserDefaults.standardUserDefaults().boolForKey(keys.exportToImages)
-var excludeWithPrefix =  NSUserDefaults.standardUserDefaults().boolForKey(keys.excludeWithPrefix)
-var exclusionPrefix =  NSUserDefaults.standardUserDefaults().stringForKey(keys.exclusionPrefix)
-var imageExportScale =  NSUserDefaults.standardUserDefaults().stringForKey(keys.imageExportScale)
-var includeSymbolArtboards = NSUserDefaults.standardUserDefaults().boolForKey(keys.includeSymbolArtboards)
-var exportOrder = NSUserDefaults.standardUserDefaults().integerForKey(keys.exportOrder)
-
-if (exportToImages == null) exportToImages = defaults[keys.exportToImages]
-if (excludeWithPrefix == null) excludeWithPrefix = defaults[keys.excludeWithPrefix]
-if (exclusionPrefix == null) exclusionPrefix = defaults[keys.exclusionPrefix]
-if (imageExportScale == null) imageExportScale = defaults[keys.imageExportScale]
-if (includeSymbolArtboards == null) includeSymbolArtboards = defaults[keys.includeSymbolArtboards]
-if (exportOrder == 0) exportOrder = defaults[keys.exportOrder]
 
 function showOptionsWindow(exportOption, name, callback) {
 
@@ -49,18 +21,9 @@ function showOptionsWindow(exportOption, name, callback) {
       message = "Export selected Artboards into a single PDF document"
       break
     default:
-
   }
 
-  // Dropdown list: Artboard order ('left to right then top to bottom', 'top to bottom then left to right')
-      // Checkbox: Reverse (false)
-  // xxx Checkbox: Include symbol master artboards (false)
-  // Checkbox: Export as images into PDF (false)
-      // Text field: Image size (2x)
-  // Checkbox: Exclude artboards and pages with prefix (true) TODO: Update copy based on if exporting whole doc
-      // Text field: Prefix ('-')
-
-  // Button: Info button?? Donate / support
+  fetchDefaults()
 
   var alert = NSAlert.alloc().init()
   alert.setIcon(iconImage)
@@ -74,7 +37,7 @@ function showOptionsWindow(exportOption, name, callback) {
   alert.setAccessoryView(container)
 
   y -= 40
-  var artboardLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 300, 20))
+  var artboardLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 150, 20))
   artboardLabel.setBezeled(false)
   artboardLabel.setDrawsBackground(false)
   artboardLabel.setEditable(false)
@@ -82,6 +45,26 @@ function showOptionsWindow(exportOption, name, callback) {
   artboardLabel.setStringValue("Artboard Order")
   artboardLabel.setFont(NSFont.paletteFontOfSize(NSFont.systemFontSize()))
   container.addSubview(artboardLabel)
+
+  var orderButton = NSButton.alloc().initWithFrame(NSMakeRect(-30, y, 300, 20))
+  orderButton.setBezelStyle(NSHelpButtonBezelStyle)
+  orderButton.setTitle('')
+  orderButton.setCOSJSTargetFunction(() => {
+    // Dismiss the alert
+    alert.buttons().objectAtIndex(1).performClick(alert)
+    AppController.sharedInstance().openPreferencesWindowWithPreferencePaneIdentifier("general")
+
+    var prefWindow = NSApplication.sharedApplication().keyWindow()
+    var prefView = prefWindow.contentView().subviews().firstObject()
+    prefView.subviews().find(view => {
+      if (view.isMemberOfClass(NSPopUpButton)) {
+        view.performSelector_withObject_afterDelay('performClick:', prefView, 0.2)
+        return true
+      }
+    })
+
+  })
+  container.addSubview(orderButton)
 
   y -= 23
   var order = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, y, 180, 23))
@@ -100,7 +83,7 @@ function showOptionsWindow(exportOption, name, callback) {
 
   var menu = NSMenu.alloc().init()
   var menuItemCallback = function(menuItem) {
-    print("item selected: " + menuItem.representedObject())
+    // print("item selected: " + menuItem.representedObject())
   }
 
   for (var i = 0; i < options.length; i++) {
@@ -124,7 +107,7 @@ function showOptionsWindow(exportOption, name, callback) {
 
   menu.setAutoenablesItems(false)
   order.setMenu(menu)
-  order.selectItemAtIndex(exportOrder)
+  order.selectItemAtIndex(defaults.exportOrder)
   // container.addSubview(order)
 
   y -= 23
@@ -139,7 +122,7 @@ function showOptionsWindow(exportOption, name, callback) {
 
   y -= 30
   var exportAsImage = NSButton.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
-	exportAsImage.setState(exportToImages)
+	exportAsImage.setState(defaults.exportToImages)
 	exportAsImage.setButtonType(NSSwitchButton)
   exportAsImage.setBezelStyle(0)
 	exportAsImage.setTitle("Export as PNGs into PDF")
@@ -158,7 +141,7 @@ function showOptionsWindow(exportOption, name, callback) {
   y += 6
   var pngSizeTextField = NSTextField.alloc().initWithFrame(NSMakeRect(105, y, 70, 23))
 	pngSizeTextField.setPlaceholderString("2x")
-  pngSizeTextField.setStringValue("" + imageExportScale)
+  pngSizeTextField.setStringValue("" + defaults.imageExportScale)
   container.addSubview(pngSizeTextField)
 
   var exportAsImageCallback = function(sender) {
@@ -179,7 +162,7 @@ function showOptionsWindow(exportOption, name, callback) {
 
   y -= 40
   var excludeWithPrefixButton = NSButton.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
-  excludeWithPrefixButton.setState(excludeWithPrefix)
+  excludeWithPrefixButton.setState(defaults.excludeWithPrefix)
   excludeWithPrefixButton.setButtonType(NSSwitchButton)
   excludeWithPrefixButton.setBezelStyle(0)
   var excludeWithPrefixTitle = (exportOption == 'all-pages') ? "Ignore Artboards and Pages with prefix" : "Ignore Artboards with prefix"
@@ -199,7 +182,7 @@ function showOptionsWindow(exportOption, name, callback) {
   y += 6
   var prefixTextField = NSTextField.alloc().initWithFrame(NSMakeRect(55, y, 120, 23))
   prefixTextField.setPlaceholderString("-")
-  prefixTextField.setStringValue(exclusionPrefix)
+  prefixTextField.setStringValue(defaults.exclusionPrefix)
   container.addSubview(prefixTextField)
 
   var excludePrefixCallback = function(sender) {
@@ -221,45 +204,22 @@ function showOptionsWindow(exportOption, name, callback) {
 
   y -= 40
   var includeSymbols = NSButton.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
-  includeSymbols.setState(includeSymbolArtboards)
+  includeSymbols.setState(defaults.includeSymbolArtboards)
   includeSymbols.setButtonType(NSSwitchButton)
   includeSymbols.setBezelStyle(0)
   includeSymbols.setTitle("Include 'Symbol Master' Artboards")
   container.addSubview(includeSymbols)
 
   if (alert.runModal() == '1000') {
-    // Accepted
-
-    print("exportToImages: " + exportAsImage.state())
-    print("imageExportScale: " + pngSizeTextField.stringValue())
-    print("excludeWithPrefix: " + excludeWithPrefixButton.state())
-    print("exclusionPrefix: " + prefixTextField.stringValue())
-
-    // TODO: Handle empty text state
-
-    exportToImages = exportAsImage.state()
-    imageExportScale = pngSizeTextField.stringValue()
-    excludeWithPrefix = excludeWithPrefixButton.state()
-    exclusionPrefix = prefixTextField.stringValue()
-    includeSymbolArtboards = includeSymbols.state()
-    exportOrder = order.indexOfSelectedItem()
-
-    NSUserDefaults.standardUserDefaults().setBool_forKey(exportToImages, keys.exportToImages)
-    NSUserDefaults.standardUserDefaults().setObject_forKey(imageExportScale, keys.imageExportScale)
-    NSUserDefaults.standardUserDefaults().setBool_forKey(excludeWithPrefix, keys.excludeWithPrefix)
-    NSUserDefaults.standardUserDefaults().setObject_forKey(exclusionPrefix, keys.exclusionPrefix)
-    NSUserDefaults.standardUserDefaults().setBool_forKey(includeSymbolArtboards, keys.includeSymbolArtboards)
-    NSUserDefaults.standardUserDefaults().setInteger_forKey(exportOrder, keys.exportOrder)
-    NSUserDefaults.standardUserDefaults().synchronize()
-
-    // Save states for next time
-    // saveValueForKey(keys.exportToImages, exportAsImage.state() != NSOffState)
-    // saveValueForKey(keys.imageExportScale, pngSizeTextField.stringValue())
-    // saveValueForKey(keys.excludeWithPrefix, excludeWithPrefix.state() != NSOffState)
-    // saveValueForKey(keys.exclusionPrefix, prefixTextField.stringValue())
-    print('accepted')
+    defaults = {
+      exportToImages: exportAsImage.state(),
+      excludeWithPrefix: excludeWithPrefixButton.state(),
+      exclusionPrefix: prefixTextField.stringValue(),
+      imageExportScale: pngSizeTextField.stringValue(),
+      includeSymbolArtboards: includeSymbols.state(),
+      exportOrder: order.indexOfSelectedItem()
+    }
+    saveDefaults()
     callback()
-  } else {
-    print('cancelled')
   }
 }

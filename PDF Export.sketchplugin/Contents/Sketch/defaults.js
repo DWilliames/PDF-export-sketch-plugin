@@ -1,20 +1,23 @@
 
-var defaultsKeyPrefix = "com.davidwilliames.pdf-export."
-
-var keys = {
-  exportToImages: defaultsKeyPrefix + "exportToImages",
-  excludeWithPrefix: defaultsKeyPrefix + "excludeWithPrefix",
-  exclusionPrefix: defaultsKeyPrefix + "exclusionPrefix",
-  imageExportScale: defaultsKeyPrefix + "imageExportScale",
-  includeSymbolArtboards: defaultsKeyPrefix + "includeSymbolArtboards",
-  exportOrder: defaultsKeyPrefix + "exportOrder",
-}
+var defaultsKey = "com.davidwilliames.pdf-export"
 
 var defaults = {
-  [keys.exportToImages]: false,
-  [keys.excludeWithPrefix]: true,
-  [keys.exclusionPrefix]: '-',
-  [keys.imageExportScale]: 2,
-  [keys.includeSymbolArtboards]: false,
-  [keys.exportOrder]: 4,
+  exportToImages: false,
+  excludeWithPrefix: true,
+  exclusionPrefix: '-',
+  imageExportScale: 2,
+  includeSymbolArtboards: false,
+  exportOrder: 4
+}
+
+function fetchDefaults() {
+  var newDefaults = NSUserDefaults.standardUserDefaults().dictionaryForKey(defaultsKey)
+  if(newDefaults != null) {
+    defaults = newDefaults
+  }
+}
+
+function saveDefaults() {
+  NSUserDefaults.standardUserDefaults().setObject_forKey(defaults, defaultsKey)
+  NSUserDefaults.standardUserDefaults().synchronize()
 }

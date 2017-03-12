@@ -39,7 +39,7 @@ Based on your use of Sketch, there may be times you want to include your master 
 
 Too often, I found myself going 'File > Export Artboards to PDF', then opening up the PDF and deleting pages I didn't actually want.
 
-Sometimes I would duplicate a page in Sketch as a new iteration on the design. I would then want to export the single iteration—consisting of multiple artboards-into a PDF for distribution and printing purposes.
+Sometimes I would duplicate a page in Sketch as a new iteration on the design. I would then want to export the single iteration—consisting of multiple artboards—into a PDF for distribution and printing purposes; so having a 'Export current page into PDF' option is a real lifesaver!!
 
 
 ## Installation

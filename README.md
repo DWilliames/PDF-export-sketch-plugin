@@ -34,7 +34,7 @@ Sometimes I would duplicate a page in Sketch as a new iteration on the design. I
 ## Installation
 
 1. Download the plugin
-2. Double-click the file, 'Nudge Resize.sketchplugin'
+2. Double-click the file, 'PDF Export.sketchplugin'
 3. That's it...
 
 
@@ -46,12 +46,16 @@ Pull requests are welcome and please submit bugs 🐛.
 
 ## Contact
 
-* Follow [@davidwilliames](https://twitter.com/davidwilliames) on Twitter
 * Email <david@williames.com>
+* Follow [@davidwilliames](https://twitter.com/davidwilliames) on Twitter
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/davidwilliames.svg?style=social&label=Follow)]()
 
 ---
+
+Check out my other Sketch Plugins:
+* [Nudge Resize](https://github.com/DWilliames/nudge-resize-sketch-plugin)
+* [Nudge Corner Radius](https://github.com/DWilliames/nudge-corner-radius-sketch-plugin)
 
 If you find this plugin helpful, consider shouting me coffee ☕️ via [PayPal](https://www.paypal.me/dtw/5)
 

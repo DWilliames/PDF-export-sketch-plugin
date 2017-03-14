@@ -36,7 +36,7 @@ function showOptionsWindow(exportOption, name, callback) {
   var container = NSView.alloc().initWithFrame(NSMakeRect(0, 0, 300, y))
   alert.setAccessoryView(container)
 
-  y -= 40
+  y -= 30
   var artboardLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 150, 20))
   artboardLabel.setBezeled(false)
   artboardLabel.setDrawsBackground(false)
@@ -64,59 +64,85 @@ function showOptionsWindow(exportOption, name, callback) {
     })
 
   })
-  container.addSubview(orderButton)
+  // Let's not show this — but not entirely delete it yet, just in case
+  // container.addSubview(orderButton)
 
   y -= 23
   var order = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, y, 180, 23))
   order.setNeedsDisplay()
 
-  var options = [
+  var orderOptions = [
     {
       title: "From the Layer List:",
-      values: ["Top to bottom", "Bottom to top"]
+      values: [{
+        title: "Top to bottom", value: 9
+      }, {
+        title: "Bottom to top", value: 8
+      }]
     },
     {
       title: "From the Canvas",
-      values: ["Left to right", "Right to left", "Top to bottom"]
+      values: [{
+        title: "Left to right", value: 0
+      }, {
+        title: "Right to left", value: 1
+      }, {
+        title: "Top to bottom", value: 2
+      }]
     }
   ]
 
+  // Get the value of the export order
+  var exportOrderValue = NSUserDefaults.standardUserDefaults().integerForKey('artboardExportingOrder')
+  var valueIndex = 4 // The index within the NSMenu referring to the export order
+  var selectedOrderValue = exportOrderValue // The value of the most recently selected order
+
   var menu = NSMenu.alloc().init()
   var menuItemCallback = function(menuItem) {
-    // print("item selected: " + menuItem.representedObject())
+    selectedOrderValue = menuItem.representedObject()
   }
 
-  for (var i = 0; i < options.length; i++) {
-    var option = options[i]
-    var title = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(option["title"], nil, "")
+  var totalIndex = 0
+
+  orderOptions.forEach((option, index) => {
+    var title = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(option.title, nil, "")
     title.setEnabled(false)
     menu.addItem(title)
 
-    option["values"].forEach(value => {
-      var menuItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(value, nil, "")
+    totalIndex++
+
+    option.values.forEach(value => {
+      var menuItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(value.title, nil, "")
       menuItem.setEnabled(true)
-      menuItem.setRepresentedObject(value)
+      menuItem.setRepresentedObject(value.value)
       menuItem.setCOSJSTargetFunction(menuItemCallback)
       menu.addItem(menuItem)
+
+      if (value.value == exportOrderValue) {
+        valueIndex = totalIndex
+      }
+
+      totalIndex++
     })
 
-    if (i < options.length - 1) {
+    if (index < orderOptions.length - 1) {
       menu.addItem(NSMenuItem.separatorItem())
+      totalIndex++
     }
-  }
+  })
 
   menu.setAutoenablesItems(false)
   order.setMenu(menu)
-  order.selectItemAtIndex(defaults.exportOrder)
-  // container.addSubview(order)
+  order.selectItemAtIndex(valueIndex)
+  container.addSubview(order)
 
-  y -= 23
-  var artboardSubLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 300, 46))
+  y -= 26
+  var artboardSubLabel = NSTextField.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))
   artboardSubLabel.setBezeled(false)
   artboardSubLabel.setDrawsBackground(false)
   artboardSubLabel.setEditable(false)
   artboardSubLabel.setSelectable(false)
-  artboardSubLabel.setStringValue("The artboard order is determined by preferences set in \nPreferences > General > Artboard Export") //"Select how Artboards will be ordered for the export."
+  artboardSubLabel.setStringValue("Select how Artboards will be ordered for the export.")
   artboardSubLabel.setFont(NSFont.systemFontOfSize(10))
   container.addSubview(artboardSubLabel)
 
@@ -219,6 +245,9 @@ function showOptionsWindow(exportOption, name, callback) {
       includeSymbolArtboards: includeSymbols.state(),
       exportOrder: order.indexOfSelectedItem()
     }
+
+    NSUserDefaults.standardUserDefaults().setInteger_forKey(selectedOrderValue, 'artboardExportingOrder')
+
     saveDefaults()
     callback()
   }

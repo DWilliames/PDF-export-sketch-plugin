@@ -1,24 +1,36 @@
 @import 'ui.js'
+@import 'utilities.js'
 
 // TODO: turn only layers with prefix into images
 
 // Global initalised variables from 'context'
-var doc
-var selection
-var iconImage
+var selection, doc, scriptPath, scriptFolder, app
+var manifestJSON, iconImage
 
 function initialise(context) {
-  doc = context.document
   selection = context.selection
+  doc = context.document
+  scriptPath = context.scriptPath
+  scriptFolder = scriptPath.stringByDeletingLastPathComponent()
+  app = NSApplication.sharedApplication()
+
+  manifestJSON = getJSONFromFile(scriptFolder + "/manifest.json")
   iconImage = NSImage.alloc().initByReferencingFile(context.plugin.urlForResourceNamed("icon.png").path())
+
+  fetchDefaults()
+
+  return !updateIfNeeded()
 }
+
 
 // ****************************
 //         Handlers
 // ****************************
 
 function exportCurrentPage(context) {
-  initialise(context)
+  if (!initialise(context)) {
+    return
+  }
   var name = doc.currentPage().name()
 
   showOptionsWindow("current-page", name, () => {
@@ -28,11 +40,12 @@ function exportCurrentPage(context) {
 }
 
 function exportAllPages(context) {
-  initialise(context)
+  if (!initialise(context)) {
+    return
+  }
 
   var name = (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
   showOptionsWindow("all-pages", name, () => {
-
     var pages = []
     doc.pages().forEach(page => pages.push(page.copy()))
     exportPages(pages, name)
@@ -41,7 +54,9 @@ function exportAllPages(context) {
 
 
 function exportSelection(context) {
-  initialise(context)
+  if (!initialise(context)) {
+    return
+  }
 
   // If any of the selection is not an artboard — then return
   // Filter out the bad layers — only allow MSArtboardGroup or MSSymbolMaster
@@ -50,7 +65,9 @@ function exportSelection(context) {
   })
 
   if (validLayers && selection.count() > 0) {
-    showOptionsWindow("selection", selection.firstObject().name(), () => {
+    var name = selection.firstObject().name()
+
+    showOptionsWindow("selection", name, () => {
       var temporaryPage = MSPage.new()
       temporaryPage.setName(name)
       selection.forEach(layer => temporaryPage.addLayer(layer))
@@ -74,6 +91,12 @@ function exportSelection(context) {
 function exportPages(pages, outputName) {
 
   var layersToRemove = [] // For invalid layers/artboards
+
+  if (defaults.excludeWithPrefix) {
+    pages = pages.filter(page => {
+      return !page.name().startsWith(defaults.exclusionPrefix)
+    })
+  }
 
   pages.forEach(page => {
     // Ignore pages with the prefix

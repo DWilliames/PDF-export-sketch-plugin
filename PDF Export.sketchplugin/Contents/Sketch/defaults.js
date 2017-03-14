@@ -6,8 +6,7 @@ var defaults = {
   excludeWithPrefix: true,
   exclusionPrefix: '-',
   imageExportScale: 2,
-  includeSymbolArtboards: false,
-  exportOrder: 4
+  includeSymbolArtboards: false
 }
 
 function fetchDefaults() {

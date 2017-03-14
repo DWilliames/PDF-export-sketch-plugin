@@ -13,7 +13,7 @@ A Sketch Plugin to export artboards to a PDF document.
 * Export current page
 * Export selected artboards
 
-![PDF Export Preferences](images/pdf-export.png)
+![PDF Export Preferences](images/pdf-export2.png)
 
 
 ## Features

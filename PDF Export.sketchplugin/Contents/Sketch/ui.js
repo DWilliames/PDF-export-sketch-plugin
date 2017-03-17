@@ -46,27 +46,6 @@ function showOptionsWindow(exportOption, name, callback) {
   artboardLabel.setFont(NSFont.paletteFontOfSize(NSFont.systemFontSize()))
   container.addSubview(artboardLabel)
 
-  var orderButton = NSButton.alloc().initWithFrame(NSMakeRect(-30, y, 300, 20))
-  orderButton.setBezelStyle(NSHelpButtonBezelStyle)
-  orderButton.setTitle('')
-  orderButton.setCOSJSTargetFunction(() => {
-    // Dismiss the alert
-    alert.buttons().objectAtIndex(1).performClick(alert)
-    AppController.sharedInstance().openPreferencesWindowWithPreferencePaneIdentifier("general")
-
-    var prefWindow = NSApplication.sharedApplication().keyWindow()
-    var prefView = prefWindow.contentView().subviews().firstObject()
-    prefView.subviews().find(view => {
-      if (view.isMemberOfClass(NSPopUpButton)) {
-        view.performSelector_withObject_afterDelay('performClick:', prefView, 0.2)
-        return true
-      }
-    })
-
-  })
-  // Let's not show this — but not entirely delete it yet, just in case
-  // container.addSubview(orderButton)
-
   y -= 23
   var order = NSPopUpButton.alloc().initWithFrame(NSMakeRect(0, y, 180, 23))
   order.setNeedsDisplay()

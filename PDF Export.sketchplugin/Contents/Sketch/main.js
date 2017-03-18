@@ -47,7 +47,7 @@ function exportAllPages(context) {
   var name = (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
   showOptionsWindow("all-pages", name, function() {
     var pages = []
-    doc.pages().forEach(page => pages.push(page.copy()))
+    doc.pages().forEach(function(page){pages.push(page.copy())})
     exportPages(pages, name)
   })
 }
@@ -98,7 +98,7 @@ function exportPages(pages, outputName) {
     })
   }
 
-  pages.forEach(page => {
+  pages.forEach(function(page){
     // Ignore pages with the prefix
     if (defaults.excludeWithPrefix && page.name().startsWith(defaults.exclusionPrefix))
       return

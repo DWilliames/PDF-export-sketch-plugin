@@ -33,7 +33,7 @@ function exportCurrentPage(context) {
   }
   var name = doc.currentPage().name()
 
-  showOptionsWindow("current-page", name, () => {
+  showOptionsWindow("current-page", name, function() {
     var temporaryPage = doc.currentPage().copy()
     exportPages([temporaryPage], name)
   })
@@ -45,7 +45,7 @@ function exportAllPages(context) {
   }
 
   var name = (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
-  showOptionsWindow("all-pages", name, () => {
+  showOptionsWindow("all-pages", name, function() {
     var pages = []
     doc.pages().forEach(page => pages.push(page.copy()))
     exportPages(pages, name)
@@ -60,17 +60,17 @@ function exportSelection(context) {
 
   // If any of the selection is not an artboard — then return
   // Filter out the bad layers — only allow MSArtboardGroup or MSSymbolMaster
-  var validLayers = selection.every(layer => {
+  var validLayers = selection.every(function(layer){
     return layer.isMemberOfClass(MSArtboardGroup) || layer.isMemberOfClass(MSSymbolMaster)
   })
 
   if (validLayers && selection.count() > 0) {
     var name = selection.firstObject().name()
 
-    showOptionsWindow("selection", name, () => {
+    showOptionsWindow("selection", name, function(){
       var temporaryPage = MSPage.new()
       temporaryPage.setName(name)
-      selection.forEach(layer => temporaryPage.addLayer(layer))
+      selection.forEach(function(layer){temporaryPage.addLayer(layer)})
       exportPages([temporaryPage], name)
     })
   } else {
@@ -93,7 +93,7 @@ function exportPages(pages, outputName) {
   var layersToRemove = [] // For invalid layers/artboards
 
   if (defaults.excludeWithPrefix) {
-    pages = pages.filter(page => {
+    pages = pages.filter(function(page){
       return !page.name().startsWith(defaults.exclusionPrefix)
     })
   }
@@ -105,7 +105,7 @@ function exportPages(pages, outputName) {
 
     doc.documentData().addPage(page)
 
-    page.layers().forEach(layer => {
+    page.layers().forEach(function(layer){
 
       if (!(layer.isMemberOfClass(MSSymbolMaster) || layer.isMemberOfClass(MSArtboardGroup))) {
         layersToRemove.push(layer)
@@ -121,7 +121,7 @@ function exportPages(pages, outputName) {
         layer = MSSymbolMaster.convertSymbolToArtboard(layer)
       }
 
-      layer.children().forEach(sublayer => {
+      layer.children().forEach(function(sublayer){
         if (sublayer.isMemberOfClass(MSSymbolInstance)) {
           sublayer.detachByReplacingWithGroup()
         }
@@ -130,7 +130,7 @@ function exportPages(pages, outputName) {
     })
   })
 
-  layersToRemove.forEach(layer => layer.removeFromParent())
+  layersToRemove.forEach(function(layer){layer.removeFromParent()})
 
   if (defaults.exportToImages) {
     // Ask the user where they want to save it
@@ -140,9 +140,9 @@ function exportPages(pages, outputName) {
       var filesToDelete = [] // For temporary images
       var pdf = PDFDocument.alloc().init()
 
-      pages.forEach(page => {
+      pages.forEach(function(page){
         var orderedArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(page.artboards())
-        orderedArtboards.forEach(artboard => {
+        orderedArtboards.forEach(function(artboard){
           if (!artboard.isMemberOfClass(MSArtboardGroup))
             return
 
@@ -190,7 +190,7 @@ function exportPages(pages, outputName) {
       pdf.writeToURL(saveLocation)
 
       // Delete each of the temporary images we created for the artboards
-      filesToDelete.forEach(file => {
+      filesToDelete.forEach(function(file){
         NSFileManager.defaultManager().removeItemAtPath_error(file, nil)
       })
     }
@@ -199,7 +199,7 @@ function exportPages(pages, outputName) {
     MSPDFBookExporter.exportPages_defaultFilename(pages, outputName)
   }
 
-  pages.forEach(page => doc.documentData().removePage(page))
+  pages.forEach(function(page){doc.documentData().removePage(page)})
 }
 
 

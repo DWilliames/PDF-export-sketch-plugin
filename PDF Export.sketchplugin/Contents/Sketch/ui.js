@@ -83,14 +83,14 @@ function showOptionsWindow(exportOption, name, callback) {
 
   var totalIndex = 0
 
-  orderOptions.forEach((option, index) => {
+  orderOptions.forEach(function(option, index){
     var title = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(option.title, nil, "")
     title.setEnabled(false)
     menu.addItem(title)
 
     totalIndex++
 
-    option.values.forEach(value => {
+    option.values.forEach(function(value){
       var menuItem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent(value.title, nil, "")
       menuItem.setEnabled(true)
       menuItem.setRepresentedObject(value.value)
@@ -205,7 +205,6 @@ function showOptionsWindow(exportOption, name, callback) {
 
   excludeWithPrefixButton.setCOSJSTargetFunction(excludePrefixCallback)
   excludePrefixCallback(excludeWithPrefixButton)
-
 
   y -= 40
   var includeSymbols = NSButton.alloc().initWithFrame(NSMakeRect(0, y, 300, 23))

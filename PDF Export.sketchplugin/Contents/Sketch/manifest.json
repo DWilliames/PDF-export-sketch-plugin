@@ -3,7 +3,7 @@
   "description": "Export artboards to PDF — from the current page, all pages or current selection",
   "author": "David Williames",
   "homepage": "https://github.com/DWilliames/PDF-export",
-  "version": "1.2",
+  "version": "1.2.1",
   "identifier": "com.davidwilliames.sketch.pdf-export",
   "compatibleVersion": "39",
   "bundleVersion": "1.0",

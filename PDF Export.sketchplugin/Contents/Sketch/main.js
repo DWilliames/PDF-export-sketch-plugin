@@ -33,6 +33,10 @@ function exportCurrentPage(context) {
   }
   var name = doc.currentPage().name()
 
+  if (doc.currentPage().artboards().length == 0) {
+    return alertNoArtboards("There are no Artboards on your page. Please create some Artboards to export.")
+  }
+
   showOptionsWindow("current-page", name, function() {
     var temporaryPage = doc.currentPage().copy()
     exportPages([temporaryPage], name)
@@ -44,10 +48,23 @@ function exportAllPages(context) {
     return
   }
 
+  // Make sure that there are artboards available to export
+  var totalArtboards = 0
+  doc.pages().forEach(function(page) {
+    print('name: ' + page.name() + ', artboards = ' + page.artboards().length)
+    totalArtboards += page.artboards().length
+  })
+
+  if (totalArtboards == 0) {
+    return alertNoArtboards("There are no Artboards in your document. Please create some Artboards to export.")
+  }
+
   var name = (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
   showOptionsWindow("all-pages", name, function() {
     var pages = []
-    doc.pages().forEach(function(page){pages.push(page.copy())})
+    doc.pages().forEach(function(page) {
+      pages.push(page.copy())
+    })
     exportPages(pages, name)
   })
 }
@@ -67,20 +84,27 @@ function exportSelection(context) {
   if (validLayers && selection.count() > 0) {
     var name = selection.firstObject().name()
 
-    showOptionsWindow("selection", name, function(){
+    showOptionsWindow("selection", name, function() {
       var temporaryPage = MSPage.new()
       temporaryPage.setName(name)
-      selection.forEach(function(layer){temporaryPage.addLayer(layer)})
+      selection.forEach(function(layer) {
+        temporaryPage.addLayer(layer)
+      })
       exportPages([temporaryPage], name)
     })
   } else {
-    var alert = NSAlert.alloc().init()
-    alert.setIcon(iconImage)
-    alert.setMessageText("PDF Export Artboards")
-    alert.setInformativeText("Only artboards are allowed to be selected in order to proceed")
-    alert.addButtonWithTitle("Got it")
-    alert.runModal()
+    alertNoArtboards("Only Artboards supported. Please select ONLY Artboards and try again.")
   }
+}
+
+// Show an alert when there are no Artboards
+function alertNoArtboards(message) {
+  var alert = NSAlert.alloc().init()
+  alert.setIcon(iconImage)
+  alert.setMessageText("PDF Export — No Artboards")
+  alert.setInformativeText(message)
+  alert.addButtonWithTitle("Got it")
+  return alert.runModal()
 }
 
 
@@ -91,6 +115,7 @@ function exportSelection(context) {
 function exportPages(pages, outputName) {
 
   var layersToRemove = [] // For invalid layers/artboards
+  var totalArtboards = 0 // Keep count of total valid artboards
 
   if (defaults.excludeWithPrefix) {
     pages = pages.filter(function(page){
@@ -121,16 +146,41 @@ function exportPages(pages, outputName) {
         layer = MSSymbolMaster.convertSymbolToArtboard(layer)
       }
 
-      layer.children().forEach(function(sublayer){
+      if (layer.isMemberOfClass(MSArtboardGroup)){
+        totalArtboards++
+      }
+
+      layer.children().forEach(function(sublayer) {
         if (sublayer.isMemberOfClass(MSSymbolInstance)) {
-          sublayer.detachByReplacingWithGroup()
+          var symbolMaster = sublayer.symbolMaster()
+
+          // Detatch the symbol from it's master
+          var group = sublayer.detachByReplacingWithGroup()
+
+          // If the symbol had a background colour — re-add it as a rectangle shape
+          if (symbolMaster.hasBackgroundColor() && symbolMaster.includeBackgroundColorInExport() && symbolMaster.includeBackgroundColorInInstance()) {
+            var shape = MSShapeGroup.shapeWithRect(group.bounds())
+            var fill = shape.style().addStylePartOfType(0)
+            fill.color = symbolMaster.backgroundColor()
+            group.insertLayers_atIndex([shape], 0)
+          }
         }
       })
-
     })
   })
 
-  layersToRemove.forEach(function(layer){layer.removeFromParent()})
+  // If there's no artboards to export — exit
+  if (totalArtboards == 0) {
+    alertNoArtboards("Based on your preferences, there are no Artboards to export. Please change your settings or create some more Artboards then try again.")
+    pages.forEach(function(page) {
+      doc.documentData().removePage(page)
+    })
+    return
+  }
+
+  layersToRemove.forEach(function(layer) {
+    layer.removeFromParent()
+  })
 
   if (defaults.exportToImages) {
     // Ask the user where they want to save it
@@ -199,7 +249,9 @@ function exportPages(pages, outputName) {
     MSPDFBookExporter.exportPages_defaultFilename(pages, outputName)
   }
 
-  pages.forEach(function(page){doc.documentData().removePage(page)})
+  pages.forEach(function(page) {
+    doc.documentData().removePage(page)
+  })
 }
 
 

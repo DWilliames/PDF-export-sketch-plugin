@@ -23,7 +23,7 @@ A Sketch Plugin to export artboards to a PDF document.
 | **Artboard Export Order** | Easily set the export order of the artboards when running the plugin. |
 | **Export as PNGs into PDF** | This will export each artboard first into a PNG, then place those PNGs together into a single PDF document. This is extremely helpful for things such as 'images with fills', 'gradient fills', 'some shadows' that sometimes don't render well into a PDF.*You can also specify the export size for the PNGs — same as the typical Sketch export; `200w` = width of 200px, `100h` = height of 100px, `3x` = 3 times artboard size* |
 | **Ignore Artboards/pages with prefix** | Do you sometimes have those few artboards you still want to keep around, but don't necessarily want to export? Or maybe a page that is an archive? Then this is perfect for you. When checked, you can specify a prefix. Every artboard or page with that prefix will be excluded when exporting. |
-| **Include 'Symbol Master' Artboards** | Do you sometimes have those few artboards you still want to keep around, but don't necessarily want to export? Then this is perfect for you. When checked, you can specify a prefix. Every artboard with that prefix will be excluded when exporting. |
+| **Include 'Symbol Master' Artboards** | Perhaps you use Symbols and wish to include the 'Symbol Master' artboards in your export... now you can. |
 
 
 ## Why make this plugin?

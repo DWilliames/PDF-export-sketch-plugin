@@ -1,5 +1,4 @@
 @import 'ui.js'
-@import 'utilities.js'
 
 // TODO: turn only layers with prefix into images
 
@@ -7,7 +6,7 @@
 var selection, doc, scriptPath, scriptFolder, app
 var manifestJSON, iconImage
 
-function initialise(context) {
+function onSetUp(context) {
   selection = context.selection
   doc = context.document
   scriptPath = context.scriptPath
@@ -18,8 +17,6 @@ function initialise(context) {
   iconImage = NSImage.alloc().initByReferencingFile(context.plugin.urlForResourceNamed("icon.png").path())
 
   fetchDefaults()
-
-  return !updateIfNeeded()
 }
 
 
@@ -28,83 +25,15 @@ function initialise(context) {
 // ****************************
 
 function exportCurrentPage(context) {
-  if (!initialise(context)) {
-    return
-  }
-  var name = doc.currentPage().name()
-
-  if (doc.currentPage().artboards().length == 0) {
-    return alertNoArtboards("There are no Artboards on your page. Please create some Artboards to export.")
-  }
-
-  showOptionsWindow("current-page", name, function() {
-    var temporaryPage = doc.currentPage().copy()
-    exportPages([temporaryPage], name)
-  })
+  exportForOption(exportOptions.currentPage)
 }
 
 function exportAllPages(context) {
-  if (!initialise(context)) {
-    return
-  }
-
-  // Make sure that there are artboards available to export
-  var totalArtboards = 0
-  doc.pages().forEach(function(page) {
-    print('name: ' + page.name() + ', artboards = ' + page.artboards().length)
-    totalArtboards += page.artboards().length
-  })
-
-  if (totalArtboards == 0) {
-    return alertNoArtboards("There are no Artboards in your document. Please create some Artboards to export.")
-  }
-
-  var name = (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
-  showOptionsWindow("all-pages", name, function() {
-    var pages = []
-    doc.pages().forEach(function(page) {
-      pages.push(page.copy())
-    })
-    exportPages(pages, name)
-  })
+  exportForOption(exportOptions.allPages)
 }
-
 
 function exportSelection(context) {
-  if (!initialise(context)) {
-    return
-  }
-
-  // If any of the selection is not an artboard — then return
-  // Filter out the bad layers — only allow MSArtboardGroup or MSSymbolMaster
-  var validLayers = selection.every(function(layer){
-    return layer.isMemberOfClass(MSArtboardGroup) || layer.isMemberOfClass(MSSymbolMaster)
-  })
-
-  if (validLayers && selection.count() > 0) {
-    var name = selection.firstObject().name()
-
-    showOptionsWindow("selection", name, function() {
-      var temporaryPage = MSPage.new()
-      temporaryPage.setName(name)
-      selection.forEach(function(layer) {
-        temporaryPage.addLayer(layer)
-      })
-      exportPages([temporaryPage], name)
-    })
-  } else {
-    alertNoArtboards("Only Artboards supported. Please select ONLY Artboards and try again.")
-  }
-}
-
-// Show an alert when there are no Artboards
-function alertNoArtboards(message) {
-  var alert = NSAlert.alloc().init()
-  alert.setIcon(iconImage)
-  alert.setMessageText("PDF Export — No Artboards")
-  alert.setInformativeText(message)
-  alert.addButtonWithTitle("Got it")
-  return alert.runModal()
+  exportForOption(exportOptions.selection)
 }
 
 
@@ -112,146 +41,182 @@ function alertNoArtboards(message) {
 //      Exporting Artboards
 // ****************************
 
-function exportPages(pages, outputName) {
+function exportForOption(exportOption) {
 
-  var layersToRemove = [] // For invalid layers/artboards
-  var totalArtboards = 0 // Keep count of total valid artboards
+  var artboards = exportableArtboards(exportOption)
 
-  if (defaults.excludeWithPrefix) {
-    pages = pages.filter(function(page){
-      return !page.name().startsWith(defaults.exclusionPrefix)
-    })
-  }
-
-  pages.forEach(function(page){
-    // Ignore pages with the prefix
-    if (defaults.excludeWithPrefix && page.name().startsWith(defaults.exclusionPrefix))
-      return
-
-    doc.documentData().addPage(page)
-
-    page.layers().forEach(function(layer){
-
-      if (!(layer.isMemberOfClass(MSSymbolMaster) || layer.isMemberOfClass(MSArtboardGroup))) {
-        layersToRemove.push(layer)
-        return
-      }
-
-      if (defaults.excludeWithPrefix && layer.name().startsWith(defaults.exclusionPrefix)) {
-        layersToRemove.push(layer)
-        return
-      }
-
-      if (defaults.includeSymbolArtboards && layer.isMemberOfClass(MSSymbolMaster)){
-        layer = MSSymbolMaster.convertSymbolToArtboard(layer)
-      }
-
-      if (layer.isMemberOfClass(MSArtboardGroup)){
-        totalArtboards++
-      }
-
-      layer.children().forEach(function(sublayer) {
-        if (sublayer.isMemberOfClass(MSSymbolInstance)) {
-          var symbolMaster = sublayer.symbolMaster()
-
-          // Detatch the symbol from it's master
-          var group = sublayer.detachByReplacingWithGroup()
-
-          // If the symbol had a background colour — re-add it as a rectangle shape
-          if (symbolMaster.hasBackgroundColor() && symbolMaster.includeBackgroundColorInExport() && symbolMaster.includeBackgroundColorInInstance()) {
-            var shape = MSShapeGroup.shapeWithRect(group.bounds())
-            var fill = shape.style().addStylePartOfType(0)
-            fill.color = symbolMaster.backgroundColor()
-            group.insertLayers_atIndex([shape], 0)
-          }
-        }
-      })
-    })
-  })
-
-  // If there's no artboards to export — exit
-  if (totalArtboards == 0) {
-    alertNoArtboards("Based on your preferences, there are no Artboards to export. Please change your settings or create some more Artboards then try again.")
-    pages.forEach(function(page) {
-      doc.documentData().removePage(page)
-    })
+  if (artboards.length == 0) {
+    alertNoArtboards(noArtboardsAlertMessage(exportOption))
     return
   }
 
-  layersToRemove.forEach(function(layer) {
-    layer.removeFromParent()
-  })
+  var outputName = getOutputName(exportOption, artboards)
 
-  if (defaults.exportToImages) {
-    // Ask the user where they want to save it
-    var saveLocation = promptSaveLocation(outputName)
-    if (saveLocation) {
+  showOptionsWindow(exportOption, outputName, function() {
 
-      var filesToDelete = [] // For temporary images
-      var pdf = PDFDocument.alloc().init()
-
-      pages.forEach(function(page){
-        var orderedArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(page.artboards())
-        orderedArtboards.forEach(function(artboard){
-          if (!artboard.isMemberOfClass(MSArtboardGroup))
-            return
-
-          if (artboard.hasBackgroundColor() && artboard.includeBackgroundColorInExport()) {
-            var shape = MSShapeGroup.shapeWithRect(artboard.bounds())
-            var fill = shape.style().addStylePartOfType(0)
-            fill.color = artboard.backgroundColor()
-            artboard.insertLayers_atIndex([shape], 0)
-          }
-
-          // Create a temporary image of the artboard
-          var random = NSUUID.UUID().UUIDString()
-          var tempPath = NSTemporaryDirectory() + artboard.objectID() + ' ' + random + '.png'
-          // doc.saveArtboardOrSlice_toFile(tempSlice, tempPath)
-          filesToDelete.push(tempPath)
-
-          var exportScale = defaults.imageExportScale.replace(/\s/g, '') // remove spaces
-          if (exportScale.slice(-1) == 'h') { // Height
-            exportScale = parseInt(exportScale.slice(0, -1)) / artboard.frame().height()
-          } else if (exportScale.slice(-1) == 'w') { // Width
-            exportScale = parseInt(exportScale.slice(0, -1)) / artboard.frame().width()
-          } else {
-            exportScale = parseInt(exportScale)
-          }
-
-          artboard.exportOptions().addExportFormat()
-          var exportSize = artboard.exportOptions().exportFormats().lastObject()
-          exportSize.scale = exportScale
-          exportSize.name = ''
-          exportSize.format = 'png'
-
-          var rect = artboard.absoluteRect().rect()
-          var slice = MSExportRequest.exportRequestFromExportFormat_layer_inRect_useIDForName(exportSize, artboard, rect, false)
-          doc.saveArtboardOrSlice_toFile(slice, tempPath)
-
-          // Add the image as a page to our PDF
-          var image = NSImage.alloc().initByReferencingFile(tempPath)
-          var pdfPage = PDFPage.alloc().initWithImage(image)
-          pdf.insertPage_atIndex(pdfPage, pdf.pageCount())
-
-        })
-      })
-
-      // Save the whole PDF document — to the location the user specified
-      pdf.writeToURL(saveLocation)
-
-      // Delete each of the temporary images we created for the artboards
-      filesToDelete.forEach(function(file){
-        NSFileManager.defaultManager().removeItemAtPath_error(file, nil)
-      })
+    var filteredArtboards = filterAndOrderArtboards(artboards)
+    if (filteredArtboards.length == 0) {
+      alertNoArtboards("Based on your preferences, there are no Artboards to export. Please change your settings or create some more Artboards then try again.")
+      return
     }
 
-  } else {
-    MSPDFBookExporter.exportPages_defaultFilename(pages, outputName)
+    outputName = getOutputName(exportOption, filteredArtboards)
+    exportArtboards(filteredArtboards, outputName)
+  })
+
+}
+
+
+// Return all the artboards to be exported
+// Export Option = 'all-pages', 'current-page' or 'selection'
+function exportableArtboards(exportOption) {
+
+  var artboards = []
+
+  switch (exportOption) {
+    case exportOptions.allPages:
+      doc.pages().forEach(function(page) {
+        page.artboards().forEach(function(artboard) {
+          artboards.push(artboard)
+        })
+      })
+      break
+    case exportOptions.currentPage:
+      artboards = doc.currentPage().artboards()
+      break
+    case exportOptions.selection:
+      artboards = selection
+      break
+    default:
   }
 
-  pages.forEach(function(page) {
-    doc.documentData().removePage(page)
+  return artboards
+}
+
+
+// Return the appropriate alert message for when there is no artboards
+function noArtboardsAlertMessage(exportOption) {
+  switch (exportOption) {
+    case exportOptions.allPages:
+      return "There are no Artboards in your document. Please create some Artboards to export."
+    case exportOptions.currentPage:
+      return "There are no Artboards on your page. Please create some Artboards to export."
+    case exportOptions.selection:
+      return "Only Artboards supported. Please select ONLY Artboards and try again."
+    default:
+  }
+
+  return ""
+}
+
+
+// Get the default output name
+function getOutputName(exportOption, artboards) {
+  switch (exportOption) {
+    case exportOptions.allPages:
+      return (sketchVersionNumber() >= 430) ? doc.cloudName() : doc.publisherFileName()
+    case exportOptions.currentPage:
+      return doc.currentPage().name()
+    case exportOptions.selection:
+      return artboards.firstObject() ? artboards.firstObject().name() : ""
+    default:
+  }
+  return ""
+}
+
+
+// Filter out irrelevant artboards (e.g. with prefix, or is a symbol)
+// Order the artboards correctly
+function filterAndOrderArtboards(artboards) {
+
+  var filteredArtboards = []
+  artboards.forEach(function(artboard) {
+
+    // Omit artboards with prefix – when the option has been selected
+    if (defaults.excludeWithPrefix && artboard.name().startsWith(defaults.exclusionPrefix)) {
+      return
+    }
+
+    // Include Symbols, if the option has been selected
+    if (defaults.includeSymbolArtboards && artboard.isMemberOfClass(MSSymbolMaster)) {
+      filteredArtboards.push(artboard)
+      return
+    }
+
+    // Only allow actual Artboards
+    if (artboard.isMemberOfClass(MSArtboardGroup)) {
+      filteredArtboards.push(artboard)
+    }
   })
+
+  var orderedArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(filteredArtboards)
+  return orderedArtboards
+}
+
+
+// Export the artboards with a speicifed default filename, 'outputName'
+function exportArtboards(artboards, outputName) {
+
+  var saveLocation = promptSaveLocation(outputName)
+  if (!saveLocation) return
+
+  var pdf = PDFDocument.alloc().init()
+  var filesToDelete = []
+
+  artboards.forEach(function(artboard) {
+
+    if (defaults.exportToImages) {
+      // Create a temporary image of the artboard
+      var random = NSUUID.UUID().UUIDString()
+      var imagePath = NSTemporaryDirectory() + artboard.objectID() + ' ' + random + '.png'
+
+      // Create a new temporary export option
+      artboard.exportOptions().addExportFormat()
+      var newExportFormat = artboard.exportOptions().exportFormats().lastObject()
+      newExportFormat.scale = exportScale(artboard.frame())
+      newExportFormat.name = ''
+      newExportFormat.format = 'png'
+
+      var rect = artboard.absoluteRect().rect()
+      var slice = MSExportRequest.exportRequestFromExportFormat_layer_inRect_useIDForName(newExportFormat, artboard, rect, false)
+      doc.saveArtboardOrSlice_toFile(slice, imagePath)
+      filesToDelete.push(imagePath)
+
+      artboard.exportOptions().removeExportFormat(newExportFormat)
+
+      // Add the image as a page to our PDF
+      var image = NSImage.alloc().initByReferencingFile(imagePath)
+      var artboardPDF = PDFPage.alloc().initWithImage(image)
+
+      pdf.insertPage_atIndex(artboardPDF, pdf.pageCount())
+    } else {
+      var artboardPDF = MSPDFBookExporter.pdfFromArtboard(artboard)
+      pdf.insertPage_atIndex(artboardPDF, pdf.pageCount())
+    }
+  })
+
+  // Save the whole PDF document — to the location the user specified
+  pdf.writeToURL(saveLocation)
+
+  filesToDelete.forEach(function(file) {
+    NSFileManager.defaultManager().removeItemAtPath_error(file, nil)
+  })
+}
+
+
+// Return the export scale, based on the user's preferences
+// Taking into account the frame of an artboard
+function exportScale(frame) {
+  var exportScale = defaults.imageExportScale.replace(/\s/g, '') // remove spaces
+  if (exportScale.slice(-1) == 'h') { // Height
+    exportScale = parseInt(exportScale.slice(0, -1)) / frame.height()
+  } else if (exportScale.slice(-1) == 'w') { // Width
+    exportScale = parseInt(exportScale.slice(0, -1)) / frame.width()
+  } else {
+    exportScale = parseInt(exportScale)
+  }
+
+  return exportScale
 }
 
 
@@ -274,6 +239,18 @@ function promptSaveLocation(fileName) {
   return nil
 }
 
+
+// Show an alert when there are no Artboards
+function alertNoArtboards(message) {
+  var alert = NSAlert.alloc().init()
+  alert.setIcon(iconImage)
+  alert.setMessageText("PDF Export — No Artboards")
+  alert.setInformativeText(message)
+  alert.addButtonWithTitle("Got it")
+  return alert.runModal()
+}
+
+
 // Return the version number for sketch — turned into a single integer
 // e.g. '3.8.5' => 385, '40.2' => 402
 function sketchVersionNumber() {
@@ -283,4 +260,10 @@ function sketchVersionNumber() {
     versionNumber += "0"
   }
   return parseInt(versionNumber)
+}
+
+// Return a JSON object from a file path
+function getJSONFromFile(filePath) {
+  var data = NSData.dataWithContentsOfFile(filePath)
+  return NSJSONSerialization.JSONObjectWithData_options_error(data, 0, nil)
 }

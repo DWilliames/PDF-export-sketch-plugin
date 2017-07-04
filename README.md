@@ -37,7 +37,7 @@ Sometimes I would duplicate a page in Sketch as a new iteration on the design. I
 
 ## Installation
 
-1. Download the plugin
+1. [Download the plugin](https://api.sketchpacks.com/v1/plugins/com.davidwilliames.sketch.pdf-export/download)
 2. Double-click the file, 'PDF Export.sketchplugin'
 3. That's it...
 

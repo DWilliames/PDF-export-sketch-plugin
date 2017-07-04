@@ -9,6 +9,12 @@ var defaults = {
   includeSymbolArtboards: false
 }
 
+var exportOptions = {
+  allPages: "all-pages",
+  currentPage: "current-page",
+  selection: "selection"
+}
+
 function fetchDefaults() {
   var newDefaults = NSUserDefaults.standardUserDefaults().dictionaryForKey(defaultsKey)
   if(newDefaults != null) {

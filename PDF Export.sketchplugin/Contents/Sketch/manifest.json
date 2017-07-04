@@ -3,13 +3,14 @@
   "description": "Export artboards to PDF — from the current page, all pages or current selection",
   "author": "David Williames",
   "homepage": "https://github.com/DWilliames/PDF-export",
-  "version": "1.2.1",
+  "version": "2.0",
   "identifier": "com.davidwilliames.sketch.pdf-export",
+  "appcast": "https://api.sketchpacks.com/v1/plugins/com.davidwilliames.sketch.pdf-export/appcast",
   "compatibleVersion": "39",
   "bundleVersion": "1.0",
   "commands": [
     {
-      "name": "Export Selected Artboards",
+      "name": "Export selected artboards",
       "identifier": "selectedArtboardsToPDF",
       "shortcut": "",
       "script": "main.js",
@@ -18,16 +19,16 @@
       "description": "Export all selected Artboards into a PDF document."
     },
     {
-      "name": "Export Current Page",
+      "name": "Export current page",
       "identifier": "currentPageToPDF",
-      "shortcut": "control e",
+      "shortcut": "",
       "script": "main.js",
       "handler": "exportCurrentPage",
       "icon": "icons\/current-page.png",
       "description": "Export all Artboards in the current page into a PDF document."
     },
     {
-      "name": "Export All Pages",
+      "name": "Export all pages",
       "identifier": "allPagesToPDF",
       "shortcut": "",
       "script": "main.js",

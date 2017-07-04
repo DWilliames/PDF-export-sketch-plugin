@@ -8,15 +8,15 @@ function showOptionsWindow(exportOption, name, callback) {
   var message = ""
 
   switch (exportOption) {
-    case "all-pages":
+    case exportOptions.allPages:
       title = "Export all pages to PDF"
       message = "Export all " + doc.pages().length + " pages from '" + name + "' into a single PDF document"
       break
-    case "current-page":
+    case exportOptions.currentPage:
       title = "Export current page to PDF"
       message = "Export Artboards from '" + name + "' into a single PDF document"
       break
-    case "selection":
+    case exportOptions.selection:
       title = "Export selection to PDF"
       message = "Export selected Artboards into a single PDF document"
       break

@@ -1,6 +1,8 @@
 @import 'ui.js'
 
 // TODO: turn only layers with prefix into images
+// TODO: nested artboards (overlapping artboards) – ignore inner ones
+// TODO: Add outline option for nested/overlapping artboards
 
 // Global initalised variables from 'context'
 var selection, doc, scriptPath, scriptFolder, app
@@ -53,8 +55,10 @@ function exportForOption(exportOption) {
   var outputName = getOutputName(exportOption, artboards)
 
   showOptionsWindow(exportOption, outputName, function() {
+    // Now that the user's preferences have been set, the ordering may need to change
+    var orderedArtboards = exportableArtboards(exportOption)
 
-    var filteredArtboards = filterAndOrderArtboards(artboards)
+    var filteredArtboards = filterArtboards(orderedArtboards)
     if (filteredArtboards.length == 0) {
       alertNoArtboards("Based on your preferences, there are no Artboards to export. Please change your settings or create some more Artboards then try again.")
       return
@@ -76,16 +80,24 @@ function exportableArtboards(exportOption) {
   switch (exportOption) {
     case exportOptions.allPages:
       doc.pages().forEach(function(page) {
-        page.artboards().forEach(function(artboard) {
+        var sortedPageArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(page.artboards())
+        sortedPageArtboards.forEach(function(artboard) {
           artboards.push(artboard)
         })
       })
       break
     case exportOptions.currentPage:
-      artboards = doc.currentPage().artboards()
+      var sortedPageArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(doc.currentPage().artboards())
+      artboards = sortedPageArtboards
       break
     case exportOptions.selection:
-      artboards = selection
+      var selectedArtboards = []
+      selection.forEach(function(selectedLayer) {
+        if (selectedLayer.isMemberOfClass(MSArtboardGroup) || selectedLayer.isMemberOfClass(MSSymbolMaster)) {
+          selectedArtboards.push(selectedLayer)
+        }
+      })
+      artboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(selectedArtboards)
       break
     default:
   }
@@ -118,7 +130,7 @@ function getOutputName(exportOption, artboards) {
     case exportOptions.currentPage:
       return doc.currentPage().name()
     case exportOptions.selection:
-      return artboards.firstObject() ? artboards.firstObject().name() : ""
+      return artboards.length > 0 ? artboards[0].name() : ""
     default:
   }
   return ""
@@ -127,7 +139,7 @@ function getOutputName(exportOption, artboards) {
 
 // Filter out irrelevant artboards (e.g. with prefix, or is a symbol)
 // Order the artboards correctly
-function filterAndOrderArtboards(artboards) {
+function filterArtboards(artboards) {
 
   var filteredArtboards = []
   artboards.forEach(function(artboard) {
@@ -149,8 +161,7 @@ function filterAndOrderArtboards(artboards) {
     }
   })
 
-  var orderedArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(filteredArtboards)
-  return orderedArtboards
+  return filteredArtboards
 }
 
 

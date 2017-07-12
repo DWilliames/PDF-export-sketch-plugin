@@ -45,7 +45,7 @@ function exportSelection(context) {
 
 function exportForOption(exportOption) {
 
-  var artboards = exportableArtboards(exportOption)
+  var artboards = exportableArtboards(exportOption, false)
 
   if (artboards.length == 0) {
     alertNoArtboards(noArtboardsAlertMessage(exportOption))
@@ -56,7 +56,7 @@ function exportForOption(exportOption) {
 
   showOptionsWindow(exportOption, outputName, function() {
     // Now that the user's preferences have been set, the ordering may need to change
-    var orderedArtboards = exportableArtboards(exportOption)
+    var orderedArtboards = exportableArtboards(exportOption, true)
 
     var filteredArtboards = filterArtboards(orderedArtboards)
     if (filteredArtboards.length == 0) {
@@ -73,13 +73,17 @@ function exportForOption(exportOption) {
 
 // Return all the artboards to be exported
 // Export Option = 'all-pages', 'current-page' or 'selection'
-function exportableArtboards(exportOption) {
+function exportableArtboards(exportOption, withOptions) {
 
   var artboards = []
 
   switch (exportOption) {
     case exportOptions.allPages:
       doc.pages().forEach(function(page) {
+        if (withOptions && defaults.excludeWithPrefix && page.name().startsWith(defaults.exclusionPrefix)) {
+          return
+        }
+
         var sortedPageArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(page.artboards())
         sortedPageArtboards.forEach(function(artboard) {
           artboards.push(artboard)

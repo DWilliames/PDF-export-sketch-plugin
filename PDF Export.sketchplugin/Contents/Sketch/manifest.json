@@ -3,7 +3,7 @@
   "description": "Export artboards to PDF — from the current page, all pages or current selection",
   "author": "David Williames",
   "homepage": "https://github.com/DWilliames/PDF-export",
-  "version": "2.0",
+  "version": "2.1",
   "identifier": "com.davidwilliames.sketch.pdf-export",
   "appcast": "https://api.sketchpacks.com/v1/plugins/com.davidwilliames.sketch.pdf-export/appcast",
   "compatibleVersion": "39",
@@ -21,7 +21,7 @@
     {
       "name": "Export current page",
       "identifier": "currentPageToPDF",
-      "shortcut": "",
+      "shortcut": "control e",
       "script": "main.js",
       "handler": "exportCurrentPage",
       "icon": "icons\/current-page.png",

@@ -54,7 +54,7 @@ function exportForOption(exportOption) {
 
   var outputName = getOutputName(exportOption, artboards)
 
-  showOptionsWindow(exportOption, outputName, function() {
+  showOptionsWindow(exportOption, outputName, function () {
     // Now that the user's preferences have been set, the ordering may need to change
     var orderedArtboards = exportableArtboards(exportOption, true)
 
@@ -79,13 +79,13 @@ function exportableArtboards(exportOption, withOptions) {
 
   switch (exportOption) {
     case exportOptions.allPages:
-      doc.pages().forEach(function(page) {
+      doc.pages().forEach(function (page) {
         if (withOptions && defaults.excludeWithPrefix && page.name().startsWith(defaults.exclusionPrefix)) {
           return
         }
 
         var sortedPageArtboards = MSArtboardOrderSorting.sortArtboardsInDefaultOrder(page.artboards())
-        sortedPageArtboards.forEach(function(artboard) {
+        sortedPageArtboards.forEach(function (artboard) {
           artboards.push(artboard)
         })
       })
@@ -96,7 +96,7 @@ function exportableArtboards(exportOption, withOptions) {
       break
     case exportOptions.selection:
       var selectedArtboards = []
-      selection.forEach(function(selectedLayer) {
+      selection.forEach(function (selectedLayer) {
         if (selectedLayer.isMemberOfClass(MSArtboardGroup) || selectedLayer.isMemberOfClass(MSSymbolMaster)) {
           selectedArtboards.push(selectedLayer)
         }
@@ -146,7 +146,7 @@ function getOutputName(exportOption, artboards) {
 function filterArtboards(artboards) {
 
   var filteredArtboards = []
-  artboards.forEach(function(artboard) {
+  artboards.forEach(function (artboard) {
 
     // Omit artboards with prefix – when the option has been selected
     if (defaults.excludeWithPrefix && artboard.name().startsWith(defaults.exclusionPrefix)) {
@@ -178,7 +178,7 @@ function exportArtboards(artboards, outputName) {
   var pdf = PDFDocument.alloc().init()
   var filesToDelete = []
 
-  artboards.forEach(function(artboard) {
+  artboards.forEach(function (artboard) {
 
     if (defaults.exportToImages) {
       // Create a temporary image of the artboard
@@ -193,8 +193,18 @@ function exportArtboards(artboards, outputName) {
       newExportFormat.format = 'png'
 
       var rect = artboard.absoluteRect().rect()
-      var slice = MSExportRequest.exportRequestFromExportFormat_layer_inRect_useIDForName(newExportFormat, artboard, rect, false)
-      doc.saveArtboardOrSlice_toFile(slice, imagePath)
+
+
+      if (sketchVersionNumber() < 790) {
+        var slice = MSExportRequest.exportRequestFromExportFormat_layer_inRect_useIDForName(newExportFormat, artboard, rect, false)
+        doc.saveArtboardOrSlice_toFile(slice, imagePath)
+      }
+      else {
+        var slice = MSExportRequest.exportRequestsFromExportableLayer_exportFormats_inRect_useIDForName(artboard, [newExportFormat], rect, false)
+        doc.saveArtboardOrSlice_toFile(slice.firstObject(), imagePath)
+      }
+
+
       filesToDelete.push(imagePath)
 
       artboard.exportOptions().removeExportFormat(newExportFormat)
@@ -205,15 +215,37 @@ function exportArtboards(artboards, outputName) {
 
       pdf.insertPage_atIndex(artboardPDF, pdf.pageCount())
     } else {
-      var artboardPDF = MSPDFBookExporter.pdfFromArtboard(artboard)
-      pdf.insertPage_atIndex(artboardPDF, pdf.pageCount())
+
+
+      if (sketchVersionNumber() < 820) {
+        var artboardPDF = MSPDFBookExporter.pdfFromArtboard(artboard)
+        pdf.insertPage_atIndex(artboardPDF, pdf.pageCount())
+      } else {
+
+        const options = {
+          overwriting: true,
+          'use-id-for-name': true,
+          formats: ['pdf'],
+          output: NSTemporaryDirectory()
+        }
+
+        let exporter = MSSelfContainedHighLevelExporter.alloc().initWithOptions(options)
+        exporter.exportLayers([artboard])
+
+        let path = NSTemporaryDirectory() + artboard.objectID() + '.pdf'
+        let newPDF = PDFDocument.alloc().initWithURL(NSURL.fileURLWithPath(path))
+        let page = newPDF.pageAtIndex(0)
+        pdf.insertPage_atIndex(page, pdf.pageCount())
+
+        filesToDelete.push(path)
+      }
     }
   })
 
   // Save the whole PDF document — to the location the user specified
   pdf.writeToURL(saveLocation)
 
-  filesToDelete.forEach(function(file) {
+  filesToDelete.forEach(function (file) {
     NSFileManager.defaultManager().removeItemAtPath_error(file, nil)
   })
 }
@@ -271,7 +303,7 @@ function alertNoArtboards(message) {
 function sketchVersionNumber() {
   var version = NSBundle.mainBundle().objectForInfoDictionaryKey("CFBundleShortVersionString")
   var versionNumber = version.stringByReplacingOccurrencesOfString_withString(".", "") + ""
-  while(versionNumber.length != 3) {
+  while (versionNumber.length != 3) {
     versionNumber += "0"
   }
   return parseInt(versionNumber)

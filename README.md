@@ -1,6 +1,5 @@
 # 📕 PDF Export — Sketch Plugin
 
-[![Download from Sketchpacks.com](https://badges.sketchpacks.com/plugins/com.davidwilliames.sketch.pdf-export/version.svg)](https://api.sketchpacks.com/v1/plugins/com.davidwilliames.sketch.pdf-export/download) [![Compatible Sketch Version](https://badges.sketchpacks.com/plugins/com.davidwilliames.sketch.pdf-export/compatibility.svg)](https://sketchpacks.com/DWilliames/PDF-export-sketch-plugin)
 
 <a href="https://www.sketchapp.com">
   <img width="160" height="41" src="images/sketch-badge.png" >
@@ -16,6 +15,8 @@ A Sketch Plugin to export artboards to a PDF document.
 * Export selected artboards
 
 ![PDF Export Preferences](images/pdf-export2.png)
+
+Note: This plugin is no longer actively maintained; whilst functionality should still work, don't expect it to be updated in the future.
 
 
 ## Features
@@ -37,26 +38,16 @@ Sometimes I would duplicate a page in Sketch as a new iteration on the design. I
 
 ## Installation
 
-1. [Download the plugin](https://api.sketchpacks.com/v1/plugins/com.davidwilliames.sketch.pdf-export/download)
+1. [Download the plugin](https://github.com/DWilliames/PDF-export-sketch-plugin/archive/refs/heads/master.zip)
 2. Double-click the file, 'PDF Export.sketchplugin'
 3. That's it...
 
+---
 
-## Contribute
-
-This plugin is in active development.
-
-Pull requests are welcome and please submit bugs 🐛.
-
-
-## Contact
-
-* Email <david@williames.com>
-* Follow [@davidwilliames](https://twitter.com/davidwilliames) on Twitter
+Follow [@davidwilliames](https://twitter.com/davidwilliames) on Twitter
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/davidwilliames.svg?style=social&label=Follow)]()
 
----
 
 Check out my other Sketch Plugins:
 * [Nudge Resize](https://github.com/DWilliames/nudge-resize-sketch-plugin)

@@ -192,7 +192,7 @@ function exportArtboards(artboards, outputName) {
       newExportFormat.name = ''
       newExportFormat.format = 'png'
 
-      var rect = artboard.absoluteRect().rect()
+      var rect = artboard.frame().rect()
 
 
       if (sketchVersionNumber() < 790) {
